@@ -1,9 +1,40 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# db/seeds.rb
+
+groups_with_tickers = {
+  "BANK" => %w[ABB ACB BAB BID BVB CTG EIB EVF HDB KLB LPB MBB MSB NAB NVB OCB PGB SHB SSB STB TCB TPB VBB VCB VIB VPB],
+  "CaoSu" => %w[DRC DRI DPR GVR PHR TRC CSM],
+  "ChungKhoan" => %w[AAS AGR APG APS BCG BMS BSI BVS CTS EVS FTS HBS HCM IVS MBS ORS PSI SBS SHS SSI TCI TVB TVC TVS VCI VDS VFS VIG VIX VND WSS],
+  "BaoHiem" => %w[ABI BIC BMI BVH IMG MIG PTI PVI VNR],
+  "KimLoai" => %w[HMC HPG HSG HSV ITQ KVC NKG NSH SHI SMC TLH TVN VGS],
+  "BDS" => %w[AAV AGG CCL CKG CSC DIG DPG DRA DTA DXG DXS FIR FIT KDH HAG HDC HDG HLD HPX IDJ KHG KOS LDG NHA NLG NTL NVL PDR PWA PXL SCR SJS TAL TCH TDC TEG THD VCR VGC VHM VIC VPI VPH VRC VRE],
+  "BDS-KhuCN" => %w[BCM CTD D2D IDC IJC KBC LHG NTC SIP SNZ SZC SZL TIP VC3],
+  "CongNghe" => %w[CMG ELC FPT ICT MFS SAM SGT ST8 VGI FOX],
+  "BanLe" => %w[AST DAH DGW DST FRT MWG MSN PET PNJ PSD VNB VTD VNM],
+  "HangTieuDung" => %w[BAV BNA GDT HAX HHS HNG IDI KDC LIX MCM NAF PPH SAB TDT TID TLG VOC],
+  "NongNghiep" => %w[AFX HAG PAN TSC NSC],
+  "MiaDuong" => %w[KTS LSS QNS SBT],
+  "ThitLon" => %w[BAF DBC HAG],
+  "DauKhi" => %w[BSR GAS OIL PLX PPS PVC PVB PVD PVS],
+  "VanTai" => %w[ACV CTI DAH DST GMD GSP HAH HHV HVN ILB MVN PHP PVT SAS SCS SGP SGN SKG TCL TCO VJC VIP VOS VSC VTP VTO],
+  "Nhua" => %w[AAA BMP NHH NTP VCS],
+  "SP-DV-CNghiep" => %w[DLG DDG DXP GEX GEE HHG LPT MHC NAG PC1 PSP PVP REE SDA SWC TCD TNI TV2 VEA VNA YEG],
+  "TaiNguyen" => %w[BMC CST DCM DHM KSB KSQ MSR MVB NBC TNT THT TVD VPG],
+  "ThuySan" => %w[ACL ANV ASM CMX FMB MPC VHC],
+  "YTe" => %w[DBD DBT DCL DMC DDN DHT DVN IMP JVC LDP TNH],
+  "LamNghiep-Giay" => %w[BKG DHC HAP HHP],
+  "HoaChat" => %w[ABS APH CSV DCM DGC DPM HII HVT PLC PLP PMB SBV STK TDP VHG VNP VPS],
+  "PhanBon" => %w[BFC DAP DDV LAS],
+  "DetMay" => %w[ADS MSH TCM TNG VGT GIL],
+  "DichVuHaTang" => %w[ASP BTP BWE CNG GEG HND HTI KHP NT2 PGN PGC PPC POW PVG QTP SJD TDM TTA VSH VCW],
+  "XD-VLXD" => %w[BCE BCC BTS C32 C4G C69 CRC CTI DXP HOM HTI HTN HUT HVH IDC L14 LCG PHC TLD VCG VNE VC7],
+  "Lctv20" => %w[MBB HDB TCB HPG HSG SSI HCM POW DBC MSN],
+  "Vn30" => %w[FPT VHM VNM ACB BID BVH CTG GAS HPG HSG KDH MBB MSN MWG NVL PDR PLX POW SAB SBT SSI STB TCB TPB VCB VIC VJC VRE VPB],
+  "CoTuc" => %w[CAP CHP D2D DHA DHG GAS NBC NCT NT2 PGC PSD SAB SCS SD5 TIP TMP TVD VCS VIP VTO NTL]
+}
+
+groups_with_tickers.each do |group_name, tickers|
+  group = Group.create!(name: group_name)
+  tickers.each do |symbol|
+    Ticker.create!(symbol: symbol, group: group)
+  end
+end

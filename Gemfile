@@ -62,7 +62,6 @@ group :test do
   gem "selenium-webdriver"
 end
 
-gem "sqlite3", ">= 2.1"
 gem "pg"
 gem "activerecord"
 gem "pg_search"
