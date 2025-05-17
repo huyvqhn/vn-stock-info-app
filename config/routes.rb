@@ -13,4 +13,9 @@ Rails.application.routes.draw do
   # root "posts#index"
   resources :tickers, only: [:index]
 
+  get 'tickers/api_data', to: 'tickers#api_data'
+  get 'tickers/new_view_name', to: 'tickers#api_data'
+  get 'market_groups', to: 'market_groups#index'
+
+
 end
