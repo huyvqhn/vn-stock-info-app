@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class MarketGroupPresenter
+
   def initialize()
     # @ticker_hash = ticker_hash
     # @tickers_results = tickers_results
@@ -19,6 +20,14 @@ class MarketGroupPresenter
     return groups_tickers
 
     # Rails.logger.info(groups_tickers)
+  end
+
+  def top_30_results(tickers_results)
+
+    adjusted_results = adjusted_tickers_results(tickers_results).index_by { |t| t['symbol'] }
+
+    adjusted_results.values.sort_by { |stock| stock['net_gd_nn'].to_s.delete(',').to_f }.reverse.first(30)
+
   end
 
   # app/presenters/market_group_presenter.rb
@@ -45,6 +54,7 @@ class MarketGroupPresenter
 
   private
 
+
   def adjusted_tickers_results(tickers_results)
     tickers_results.map do |ticker|
       net_vol_nn = ticker['foreignBuy'] - ticker['foreignSell']
@@ -52,22 +62,25 @@ class MarketGroupPresenter
         'symbol' => ticker['symbol'],
         'close_price' => ticker['closePrice'].to_f / 1000,
         'change_percent' => "#{(ticker['changePercent'].to_f).round(2)}%",
-        # 'net_vol_nn' => net_vol_nn,
         'net_vol_nn' => represent_number(net_vol_nn),
-        'net_gd_nn' => represent_number(net_vol_nn * ticker['averagePrice'] / 1_000_000),
-        'percent_Trans' => ticker['ListedShare'].present? || ticker['ListedShare'].to_f.zero? ? '' : "#{((net_vol_nn.to_f / ticker['ListedShare'].to_f) * 100).round(2)}%",
+        'net_gd_nn' => represent_number(net_vol_nn * ticker['averagePrice']),
+        'percent_Trans' => ticker['ListedShare'].present? || ticker['ListedShare'].to_f.zero? ?
+                             '' : "#{((net_vol_nn.to_f / ticker['ListedShare'].to_f) * 100).round(2)}%",
         'all_vol' => represent_number(ticker['totalTrading']),
-        'all_matching' => represent_number(ticker['totalTradingValue'] / 1_000_000),
-        'percent_vol_nn' => ticker['totalTrading'].to_f.zero? ? '0%' : "#{((net_vol_nn.to_f / ticker['totalTrading']) * 100).round(2)}%",
-        'percent_match_over_all_shares' => ticker['ListedShare'].present? && ticker['ListedShare'].to_f > 0 ? "#{((ticker['totalTrading'].to_f / ticker['ListedShare'].to_f) * 100).round(2)}%" : '',
-        'percent_own_nn' => ticker['ListedShare'].present? && ticker['ListedShare'].to_f > 0 ? "#{(((ticker['foreignRoom'].to_f - ticker['foreignRemain'].to_f) / ticker['ListedShare'].to_f) * 100).round(2)}%" : '',
-        'all_shares' => represent_number(ticker['ListedShare'].to_f / 1_000_000),
+        'all_matching' => represent_number(ticker['totalTradingValue']),
+        'percent_vol_nn' => ticker['totalTrading'].to_f.zero? ?
+                              '0%' : "#{((net_vol_nn.to_f / ticker['totalTrading']) * 100).round(2)}%",
+        'percent_match_over_all_shares' => ticker['ListedShare'].present? && ticker['ListedShare'].to_f > 0 ?
+                                             "#{((ticker['totalTrading'].to_f / ticker['ListedShare'].to_f) * 100).round(2)}%" : '',
+        'percent_own_nn' => ticker['ListedShare'].present? && ticker['ListedShare'].to_f > 0 ?
+                              "#{(((ticker['foreignRoom'].to_f - ticker['foreignRemain'].to_f) / ticker['ListedShare'].to_f) * 100).round(2)}%" : '',
+        'all_shares' => represent_number(ticker['ListedShare'].to_f),
         'note' => ticker['note']
       }
     end
   end
 
   def represent_number(number)
-    ActiveSupport::NumberHelper.number_to_delimited(number)
+    ActiveSupport::NumberHelper.number_to_delimited(number.to_i)
   end
 end

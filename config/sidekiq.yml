@@ -1,0 +1,4 @@
+schedule:
+  market_data_most_recent_fetch_job:
+    every: '1m'
+    class: MarketDataMostRecentFetchJob

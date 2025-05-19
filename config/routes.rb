@@ -16,6 +16,8 @@ Rails.application.routes.draw do
   get 'tickers/api_data', to: 'tickers#api_data'
   get 'tickers/new_view_name', to: 'tickers#api_data'
   get 'market_groups', to: 'market_groups#index'
+  get 'top_30', to: 'market_groups#top_30'
 
-
+  require 'sidekiq/web'
+  mount Sidekiq::Web => '/sidekiq'
 end
