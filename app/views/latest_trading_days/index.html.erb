@@ -1,0 +1,118 @@
+<%# This view displays the latest trading day for each ticker, grouped by group name %>
+<% presenter = MarketGroupPresenter %>
+<div class="container mt-4">
+  <% @group_trading_days.each do |group, records| %>
+    <% sorted_records = records.sort_by { |rec| -(rec[:trading_day].value_foreign_net.to_f) } %>
+    <div class="mb-5">
+      <h2 class="mb-3"><%= group %></h2>
+      <div class="table-responsive" style="max-height: 1000px; overflow-y: auto;">
+        <table class="table table-striped table-bordered align-middle" style="position: relative;">
+          <thead class="table-dark" style="position: sticky; top: 0; z-index: 2;">
+          <tr>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 0)">Symbol</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 1)">Price Close</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 2)">Price Change</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 3)">Price Change %</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 4)">Volume Total</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 5)">Volume Negotiated</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 6)">Value Total</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 7)">Value Negotiated</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 8)">Value Foreign Net</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 9)">Foreign Buy</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 10)">Foreign Sell</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 11)">Foreign Own Rate %</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 12)">Proprietary Buy</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 13)">Proprietary Sell</th>
+            <th>Note</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% sorted_records.each do |rec| %>
+            <% ticker = rec[:ticker] %>
+            <% trading = rec[:trading_day] %>
+            <% color = presenter.row_color(trading.price_change_pct) %>
+            <% vol_neg = trading.volume_negotiated.to_i %>
+            <% vol_total = trading.volume_total.to_i %>
+            <% bold_vol = (vol_total > 0 && vol_neg.to_f / vol_total > 0.2) %>
+            <% bold_val = bold_vol %>
+            <% percent_foreign_net = vol_total > 0 ? ((trading.volume_foreign_net.to_f / vol_total * 100).round(2)) : 0 %>
+            <% bold_foreign_net = percent_foreign_net.abs > 10 %>
+            <% share_listed = trading.share_listed.to_i %>
+            <% bold_value_total = (share_listed > 0 && vol_total.to_f / share_listed > 0.05) %>
+            <tr>
+              <td style="background-color: <%= color %>"><%= ticker.symbol %></td>
+              <td style="background-color: <%= color %>"><%= trading.price_close.present? ? (trading.price_close.to_f / 1000.0).round(1) : '' %></td>
+              <td style="background-color: <%= color %>"><%= number_with_delimiter(trading.price_change.to_i) %></td>
+              <td style="background-color: <%= color %>"><%= number_with_delimiter(trading.price_change_pct) %> %</td>
+              <td style="background-color: <%= color %>"><%= number_with_delimiter(vol_total) %></td>
+              <td style="background-color: <%= color %>; font-weight: <%= bold_vol ? 'bold' : 'normal' %>">
+                <%= number_with_delimiter(vol_neg) %>
+                <% if bold_vol %>
+                  <span style="font-weight: bold; color: #d9534f;">(<%= ((vol_neg.to_f / vol_total) * 100).round(1) %>%)</span>
+                <% end %>
+              </td>
+              <td style="background-color: <%= color %>; font-weight: <%= bold_value_total ? 'bold' : 'normal' %>">
+                <%= display_billion(trading.value_total) %>
+                <% if bold_value_total %>
+                  <div style="font-weight: bold; color: #d9534f; font-size: 0.95em;">
+                    (<%= ((vol_total.to_f / share_listed) * 100).round(1) %>%)
+                  </div>
+                <% end %>
+              </td>
+              <td style="background-color: <%= color %>; font-weight: <%= bold_val ? 'bold' : 'normal' %>"><%= display_billion(trading.value_negotiated) %></td>
+              <td style="background-color: <%= color %>; font-weight: <%= bold_foreign_net ? 'bold' : 'normal' %>">
+                <%= display_billion(trading.value_foreign_net) %>
+                <% if percent_foreign_net != 0 %>
+                  <div style="font-weight: bold; color: #0275d8; font-size: 0.95em;">
+                    (<%= percent_foreign_net %> %)
+                  </div>
+                <% end %>
+              </td>
+              <td style="background-color: <%= color %>"><%= number_with_delimiter(trading.volume_foreign_buy.to_i) %></td>
+              <td style="background-color: <%= color %>">-<%= number_with_delimiter(trading.volume_foreign_sell.to_i) %></td>
+              <td style="background-color: <%= color %>"><%= trading.share_foreign_own_rate.present? ? trading.share_foreign_own_rate.round(2) : '' %> %</td>
+              <td style="background-color: <%= color %>"><%= number_with_delimiter(trading.volume_proprietary_buy.to_i) %></td>
+              <td style="background-color: <%= color %>"><%= number_with_delimiter(trading.volume_proprietary_sell.to_i) %></td>
+              <td style="background-color: <%= color %>"></td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% end %>
+</div>
+<style>
+  .table th, .table td {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.95em;
+  }
+</style>
+<script>
+function sortTable(header, groupId, colIndex) {
+  var table = header.closest('table');
+  var tbody = table.tBodies[0];
+  var rows = Array.from(tbody.rows);
+  var asc = header.asc = !header.asc;
+  rows.sort(function(a, b) {
+    var aText = a.cells[colIndex].innerText.replace(/,/g, '').replace(/ %/g, '');
+    var bText = b.cells[colIndex].innerText.replace(/,/g, '').replace(/ %/g, '');
+    var aNum = parseFloat(aText);
+    var bNum = parseFloat(bText);
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      return asc ? aNum - bNum : bNum - aNum;
+    } else {
+      return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+    }
+  });
+  rows.forEach(function(row) { tbody.appendChild(row); });
+}
+</script>
+<%# Helper for displaying value in billions with 3 decimals and B suffix %>
+<% def display_billion(val)
+     v = val.to_f / 1_000_000_000
+     v.abs >= 0.001 ? ("#{v.round(3)}B") : number_with_delimiter(val.to_i)
+   end %>

@@ -85,6 +85,7 @@ GEM
     brakeman (7.0.2)
       racc
     builder (3.3.0)
+    byebug (12.0.0)
     capybara (3.40.0)
       addressable
       matrix
@@ -245,6 +246,8 @@ GEM
     rake (13.2.1)
     rdoc (6.13.1)
       psych (>= 4.0.0)
+    redis (5.4.0)
+      redis-client (>= 0.22.0)
     redis-client (0.24.0)
       connection_pool
     regexp_parser (2.10.0)
@@ -281,6 +284,8 @@ GEM
       rubocop-rails (>= 2.30)
     ruby-progressbar (1.13.0)
     rubyzip (2.4.1)
+    rufus-scheduler (3.9.2)
+      fugit (~> 1.1, >= 1.11.1)
     securerandom (0.4.1)
     selenium-webdriver (4.32.0)
       base64 (~> 0.2)
@@ -294,6 +299,9 @@ GEM
       logger (>= 1.6.2)
       rack (>= 3.1.0)
       redis-client (>= 0.23.2)
+    sidekiq-scheduler (6.0.0)
+      rufus-scheduler (~> 3.2)
+      sidekiq (>= 7.3, < 9)
     solid_cable (3.0.7)
       actioncable (>= 7.2)
       activejob (>= 7.2)
@@ -357,6 +365,7 @@ DEPENDENCIES
   activerecord
   bootsnap
   brakeman
+  byebug
   capybara
   debug
   httparty
@@ -368,9 +377,11 @@ DEPENDENCIES
   propshaft
   puma (>= 5.0)
   rails (~> 8.0.2)
+  redis
   rubocop-rails-omakase
   selenium-webdriver
   sidekiq
+  sidekiq-scheduler
   solid_cable
   solid_cache
   solid_queue

@@ -1,4 +1,9 @@
 schedule:
   market_data_most_recent_fetch_job:
-    every: '1m'
+    every: '15m'
     class: MarketDataMostRecentFetchJob
+
+  market_data_end_day_job:
+#    cron: '0 19 * * 1-5'
+    every: '5m'
+    class: MarketDataEndDayJob

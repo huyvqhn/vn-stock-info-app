@@ -1,4 +1,11 @@
 <div class="container mt-4">
+  <div class="mb-3">
+    <form action="/api/stock_prices/import_all_from_groups" method="post">
+      <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+      <input type="hidden" name="group_results_json" value='<%= MarketGroupDataService.fetch_grouped_market_data.to_json %>' />
+      <button type="submit" class="btn btn-primary">SAVE TO DB</button>
+    </form>
+  </div>
   <% @group_results.each do |group, stocks| %>
     <div class="mb-5">
       <h2 class="mb-3"><%= group %></h2>
@@ -7,12 +14,12 @@
           <thead class="table-dark">
           <tr>
             <th>Symbol</th>
-            <th>Close Price (K)</th>
+            <th>Price (K)</th>
             <th>% Change</th>
-            <th>Net vol NN</th>
-            <th>Net GD NN (M)</th>
+            <th>Vol Foreign Matching</th>
+            <th>Value Foreign Net (M)</th>
 <!--            <th>% Trans</th>-->
-            <th>All vol</th>
+            <th>Volume Total</th>
             <th>All Matching (M)</th>
             <th>% vol NN</th>
             <th>% Match/All Shares</th>
@@ -23,16 +30,15 @@
           </thead>
           <tbody>
           <% stocks.each do |stock| %>
-<!--            <tr style="background-color: <%#= MarketGroupPresenter.row_color(stock['change_percent'].to_f) %>;">-->
             <tr>
-              <% color = MarketGroupPresenter.row_color(stock['change_percent'].to_f) %>
+              <% color = MarketGroupPresenter.row_color(stock['percent_change'].to_f) %>
               <td style="background-color: <%= color %>"><%= stock['symbol'] %></td>
-              <td style="background-color: <%= color %>"><%= stock['close_price'] %></td>
-              <td style="background-color: <%= color %>"><%= stock['change_percent'] %></td>
-              <td style="background-color: <%= color %>"><%= stock['net_vol_nn'] %></td>
-              <td style="background-color: <%= color %>"><%= stock['net_gd_nn'] %></td>
+              <td style="background-color: <%= color %>"><%= stock['price'] %></td>
+              <td style="background-color: <%= color %>"><%= stock['percent_change'] %></td>
+              <td style="background-color: <%= color %>"><%= stock['volume_foreign_matching'] %></td>
+              <td style="background-color: <%= color %>"><%= stock['value_foreign_net'] %></td>
 <!--              <td style="background-color: <%#= color %>"><%#= stock['percent_Trans'] %></td>-->
-              <td style="background-color: <%= color %>"><%= stock['all_vol'] %></td>
+              <td style="background-color: <%= color %>"><%= stock['volume_total'] %></td>
               <td style="background-color: <%= color %>"><%= stock['all_matching'] %></td>
               <td style="background-color: <%= color %>"><%= stock['percent_vol_nn'] %></td>
               <td style="background-color: <%= color %>"><%= stock['percent_match_over_all_shares'] %></td>

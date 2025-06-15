@@ -10,4 +10,15 @@ class MarketDataService
     response = Net::HTTP.get(url)
     JSON.parse(response)['d']
   end
+
+  def self.fetch_tickers_by_group
+    all_ticker = Ticker.pluck(:symbol).join(',')
+    tickers_results = MarketDataService.fetch_tickers(all_ticker)
+
+    ticker_arr = Ticker.joins(:group).pluck(:symbol, 'groups.name')
+    group_hash = ticker_arr.group_by { |symbol, group_name| group_name }.transform_values{ |arr| arr.map { |(symbol,_)| symbol } }
+
+    presenter = MarketGroupPresenter.new
+    result = presenter.group_results(group_hash, tickers_results)
+  end
 end

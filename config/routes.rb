@@ -11,13 +11,21 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
-  resources :tickers, only: [:index]
+  resources :tickers, only: [ :index ]
 
-  get 'tickers/api_data', to: 'tickers#api_data'
-  get 'tickers/new_view_name', to: 'tickers#api_data'
-  get 'market_groups', to: 'market_groups#index'
-  get 'top_30', to: 'market_groups#top_30'
+  get "tickers/api_data", to: "tickers#api_data"
+  get "tickers/new_view_name", to: "tickers#api_data"
+  get "market_groups", to: "market_groups#index"
+  get "top_30", to: "market_groups#top_30"
+  get "market_groups/update", to: "market_groups#update_group_tickers"
+  get "latest_trading_days", to: "latest_trading_days#index"
 
-  require 'sidekiq/web'
-  mount Sidekiq::Web => '/sidekiq'
+  namespace :api do
+    get "stock_prices/import_all", to: "stock_prices#import_all"
+    post "stock_prices/import_all_from_groups", to: "stock_prices#import_all_from_groups"
+    match "stock_trading_days/import_all", to: "stock_trading_days#import_all", via: [ :get, :post ]
+  end
+
+  require "sidekiq/web"
+  mount Sidekiq::Web => "/sidekiq"
 end

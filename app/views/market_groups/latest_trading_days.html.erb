@@ -1,0 +1,46 @@
+<% # Controller should set @group_trading_days = { group_name => [ { ticker: ticker, trading_day: trading_day }, ... ] } %>
+<div class="container mt-4">
+  <% @group_trading_days.each do |group, records| %>
+    <div class="mb-5">
+      <h2 class="mb-3"><%= group %></h2>
+      <div class="table-responsive">
+        <table class="table table-striped table-bordered align-middle">
+          <thead class="table-dark">
+          <tr>
+            <th>Symbol</th>
+            <th>Price Close</th>
+            <th>Price Change</th>
+            <th>Price Change %</th>
+            <th>Volume Total</th>
+            <th>Value Total</th>
+            <th>Foreign Buy</th>
+            <th>Foreign Sell</th>
+            <th>Proprietary Buy</th>
+            <th>Proprietary Sell</th>
+            <th>Note</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% records.each do |rec| %>
+            <% ticker = rec[:ticker] %>
+            <% trading = rec[:trading_day] %>
+            <tr>
+              <td><%= ticker.symbol %></td>
+              <td><%= trading.price_close %></td>
+              <td><%= trading.price_change %></td>
+              <td><%= trading.price_change_pct %></td>
+              <td><%= trading.volume_total %></td>
+              <td><%= trading.value_total %></td>
+              <td><%= trading.volume_foreign_buy %></td>
+              <td><%= trading.volume_foreign_sell %></td>
+              <td><%= trading.volume_proprietary_buy %></td>
+              <td><%= trading.volume_proprietary_sell %></td>
+              <td></td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% end %>
+</div>

@@ -4,6 +4,13 @@
     <th>ID</th>
     <th>Symbol</th>
     <th>Group</th>
+    <th>Exchange</th>
+    <th>Sector</th>
+    <th>Industry</th>
+    <th>Description</th>
+    <th>Is Active</th>
+    <th>Created At</th>
+    <th>Updated At</th>
   </tr>
   </thead>
   <tbody>
@@ -11,7 +18,14 @@
     <tr>
       <td><%= ticker.id %></td>
       <td><%= ticker.symbol %></td>
-      <td><%= ticker.group.name %></td>
+      <td><%= ticker.group&.name %></td>
+      <td><%= ticker.exchange %></td>
+      <td><%= ticker.sector %></td>
+      <td><%= ticker.industry %></td>
+      <td><%= ticker.description %></td>
+      <td><%= ticker.is_active %></td>
+      <td><%= ticker.created_at %></td>
+      <td><%= ticker.updated_at %></td>
     </tr>
   <% end %>
   </tbody>
