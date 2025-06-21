@@ -50,31 +50,31 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_08_110000) do
   create_table "stock_trading_days", force: :cascade do |t|
     t.bigint "ticker_id", null: false
     t.date "trading_date", null: false
-    t.decimal "price_close", precision: 10, scale: 2, null: false
-    t.decimal "price_change", precision: 10, scale: 2
+    t.integer "price_close", null: false
+    t.integer "price_change"
     t.decimal "price_change_pct", precision: 6, scale: 2
-    t.decimal "price_average", precision: 10, scale: 2
-    t.decimal "price_open", precision: 10, scale: 2, null: false
-    t.decimal "price_high", precision: 10, scale: 2, null: false
-    t.decimal "price_low", precision: 10, scale: 2, null: false
-    t.bigint "volume_total"
-    t.bigint "volume_match"
-    t.bigint "volume_negotiated"
-    t.bigint "volume_foreign_buy"
-    t.bigint "volume_foreign_sell"
-    t.bigint "volume_foreign_net"
-    t.bigint "volume_proprietary_buy"
-    t.bigint "volume_proprietary_sell"
-    t.bigint "volume_proprietary_net"
-    t.decimal "value_total", precision: 20, scale: 2
-    t.decimal "value_match", precision: 20, scale: 2
-    t.decimal "value_negotiated", precision: 20, scale: 2
-    t.decimal "value_foreign_net", precision: 20, scale: 2
-    t.decimal "value_proprietary_net", precision: 20, scale: 2
-    t.decimal "value_foreign_buy", precision: 20, scale: 2
-    t.decimal "value_foreign_sell", precision: 20, scale: 2
-    t.decimal "value_proprietary_buy", precision: 20, scale: 2
-    t.decimal "value_proprietary_sell", precision: 20, scale: 2
+    t.integer "price_average"
+    t.integer "price_open", null: false
+    t.integer "price_high", null: false
+    t.integer "price_low", null: false
+    t.integer "volume_total"
+    t.integer "volume_match"
+    t.integer "volume_negotiated"
+    t.integer "volume_foreign_buy"
+    t.integer "volume_foreign_sell"
+    t.integer "volume_foreign_net"
+    t.integer "volume_proprietary_buy"
+    t.integer "volume_proprietary_sell"
+    t.integer "volume_proprietary_net"
+    t.bigint "value_total"
+    t.bigint "value_match"
+    t.bigint "value_negotiated"
+    t.bigint "value_foreign_net"
+    t.bigint "value_proprietary_net"
+    t.bigint "value_foreign_buy"
+    t.bigint "value_foreign_sell"
+    t.bigint "value_proprietary_buy"
+    t.bigint "value_proprietary_sell"
     t.bigint "share_listed"
     t.bigint "share_foreign_max_allowed"
     t.bigint "share_foreign_add_allowed"
@@ -107,7 +107,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_08_110000) do
     t.index ["ticker_id"], name: "index_stock_trading_days_on_ticker_id"
     t.index ["trading_date"], name: "index_stock_trading_days_on_trading_date"
     t.check_constraint "(market_depth_ask_price_1 IS NULL OR market_depth_bid_price_1 IS NULL OR market_depth_ask_price_1 >= market_depth_bid_price_1) AND (market_depth_ask_price_1 IS NULL OR market_depth_ask_price_2 IS NULL OR market_depth_ask_price_1 <= market_depth_ask_price_2) AND (market_depth_ask_price_2 IS NULL OR market_depth_ask_price_3 IS NULL OR market_depth_ask_price_2 <= market_depth_ask_price_3) AND (market_depth_bid_price_1 IS NULL OR market_depth_bid_price_2 IS NULL OR market_depth_bid_price_1 >= market_depth_bid_price_2) AND (market_depth_bid_price_2 IS NULL OR market_depth_bid_price_3 IS NULL OR market_depth_bid_price_2 >= market_depth_bid_price_3)", name: "check_market_depth"
-    t.check_constraint "COALESCE(volume_total, 0::bigint) >= 0 AND COALESCE(volume_match, 0::bigint) >= 0 AND COALESCE(volume_negotiated, 0::bigint) >= 0", name: "check_volumes"
+    t.check_constraint "COALESCE(volume_total::bigint, 0::bigint) >= 0 AND COALESCE(volume_match::bigint, 0::bigint) >= 0 AND COALESCE(volume_negotiated::bigint, 0::bigint) >= 0", name: "check_volumes"
   end
 
   create_table "tickers", force: :cascade do |t|

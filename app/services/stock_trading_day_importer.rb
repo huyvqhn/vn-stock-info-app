@@ -10,7 +10,6 @@ class StockTradingDayImporter
     url = URI(endpoint)
     response = Net::HTTP.get(url)
     json = JSON.parse(response)
-    json
   rescue
     []
   end
@@ -33,7 +32,12 @@ class StockTradingDayImporter
     negotiated_upcom_bvsc_data = fetch_json(MarketApiEndpoints::NEGOTIATE_UPCOM_BVSC)["d"]
 
     trade_info_by_symbol = index_by_symbol(bvsc_data)
-    proprietary_by_symbol = index_by_symbol(proprietary_vps_data)
+
+    anchor_date = Date.parse(trade_info_by_symbol.first[1]["tradingdate"])
+    proprietary_date = DateTime.parse(proprietary_vps_data[0]["TradingDate"]).to_date
+    proprietary_by_symbol = anchor_date == proprietary_date ? index_by_symbol(proprietary_vps_data) : []
+    # proprietary_by_symbol = index_by_symbol(proprietary_vps_data)
+
     negotiated_hnx_by_symbol = consolidate_proprietary_data(negotiated_hnx_bvsc_data)
     negotiated_hose_by_symbol = consolidate_proprietary_data(negotiated_hose_bvsc_data)
     negotiated_upcom_by_symbol = consolidate_proprietary_data(negotiated_upcom_bvsc_data)
@@ -44,7 +48,7 @@ class StockTradingDayImporter
       src.each do |symbol, values|
         all_negotiated_by_symbol[symbol] ||= { "MatchVol"=>0, "MatchVal"=>0 }
         all_negotiated_by_symbol[symbol]["MatchVol"] += values["MatchVol"]
-        all_negotiated_by_symbol[symbol]["MatchVal"] += values["MatchVal"]
+        all_negotiated_by_symbol[symbol]["MatchVal"] += values["MatchVal"].to_i
       end
     end
 
@@ -56,23 +60,6 @@ class StockTradingDayImporter
         trade_info = trade_info_by_symbol[symbol] || {}
         trade_proprietary = proprietary_by_symbol[symbol] || {}
         trade_negotiated = all_negotiated_by_symbol[symbol] || {}
-
-        # Ensure all related data is for the same trading date as trade_info
-        anchor_date = trade_info["tradingdate"]
-        proprietary = nil
-        if all_proprietary_by_symbol[symbol].is_a?(Hash)
-          prop = all_proprietary_by_symbol[symbol]
-          if prop["tradingDate"].to_s == anchor_date.to_s
-            proprietary = prop
-          end
-        end
-        vps_self = nil
-        if vps_by_symbol[symbol].is_a?(Hash)
-          vps = vps_by_symbol[symbol]
-          if vps["tradingDate"].to_s == anchor_date.to_s
-            vps_self = vps
-          end
-        end
 
         # Aggregate negotiated volumes/values from all proprietary endpoints
         volume_match = trade_info["totalTrading"].to_i
@@ -86,11 +73,10 @@ class StockTradingDayImporter
         volume_foreign_sell = trade_info["foreignSell"].to_i
         volume_foreign_net = volume_foreign_buy - volume_foreign_sell
 
-        volume_proprietary_buy = trade_proprietary["TMatchBuyVol"].to_i
-        volume_proprietary_sell = trade_proprietary["TMatchSellVol"].to_i
-
-        value_proprietary_buy = trade_proprietary["TMatchBuyVal"].to_f
-        value_proprietary_sell = trade_proprietary["TMatchSellVal"].to_f
+        volume_proprietary_buy = trade_proprietary["TMatchBuyVol"].to_i + trade_proprietary["TDealBuyVol"].to_f
+        volume_proprietary_sell = trade_proprietary["TMatchSellVol"].to_i + trade_proprietary["TDealSellVol"].to_f
+        value_proprietary_buy = trade_proprietary["TMatchBuyVal"].to_f + trade_proprietary["TDealBuyVal"].to_f
+        value_proprietary_sell = trade_proprietary["TMatchSellVal"].to_f + trade_proprietary["TDealSellVal"].to_f
 
         value_foreign_buy = volume_foreign_buy * trade_info["averagePrice"].to_f
         value_foreign_sell = volume_foreign_sell * trade_info["averagePrice"].to_f

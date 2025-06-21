@@ -19,6 +19,7 @@ Rails.application.routes.draw do
   get "top_30", to: "market_groups#top_30"
   get "market_groups/update", to: "market_groups#update_group_tickers"
   get "latest_trading_days", to: "latest_trading_days#index"
+  get "latest_trading_days/all", to: "latest_trading_days#all", as: :all_latest_trading_days
 
   namespace :api do
     get "stock_prices/import_all", to: "stock_prices#import_all"

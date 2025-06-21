@@ -1,11 +1,21 @@
 class LatestTradingDaysController < ApplicationController
   def index
-    latest_date = StockTradingDay.maximum(:trading_date)
-    trading_days = StockTradingDay.includes(ticker: :group).where(trading_date: latest_date)
-    grouped = trading_days.group_by { |td| td.ticker.group.name }
-    @group_trading_days = {}
-    grouped.each do |group_name, tds|
-      @group_trading_days[group_name] = tds.map { |td| { ticker: td.ticker, trading_day: td } }
+    @group_trading_days = MarketGroupPresenter.group_trading_days
+  end
+
+  def all
+    # First get the most recent trading date
+    most_recent_date = StockTradingDay.maximum(:trading_date)
+
+    # Then get all records for that date
+    @trading_records = StockTradingDay.where(trading_date: most_recent_date)
+                                    .includes(ticker: :group)
+                                    .order("tickers.symbol")
+                                    .map do |trading_day|
+      {
+        ticker: trading_day.ticker,
+        trading_day: trading_day
+      }
     end
   end
 end

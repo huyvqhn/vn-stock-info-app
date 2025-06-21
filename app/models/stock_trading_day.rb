@@ -1,6 +1,14 @@
 class StockTradingDay < ApplicationRecord
   belongs_to :ticker
 
+  # Scopes
+  scope :latest_days, -> {
+    latest_ids = select("DISTINCT ON (ticker_id) id")
+                .order("ticker_id, trading_date DESC")
+                .pluck(:id)
+    where(id: latest_ids)
+  }
+
   # Validations
   validates :trading_date, presence: true
   validates :price_open, :price_high, :price_low, :price_close, presence: true, numericality: true

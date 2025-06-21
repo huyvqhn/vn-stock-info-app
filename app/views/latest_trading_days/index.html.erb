@@ -1,79 +1,127 @@
 <%# This view displays the latest trading day for each ticker, grouped by group name %>
 <% presenter = MarketGroupPresenter %>
-<div class="container mt-4">
+<div class="container mt-4" style="max-width: 98% !important;">
   <% @group_trading_days.each do |group, records| %>
     <% sorted_records = records.sort_by { |rec| -(rec[:trading_day].value_foreign_net.to_f) } %>
     <div class="mb-5">
       <h2 class="mb-3"><%= group %></h2>
       <div class="table-responsive" style="max-height: 1000px; overflow-y: auto;">
         <table class="table table-striped table-bordered align-middle" style="position: relative;">
-          <thead class="table-dark" style="position: sticky; top: 0; z-index: 2;">
-          <tr>
+          <thead class="table-dark" style="position: sticky; top: 0; z-index: 2;">          <tr>
             <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 0)">Symbol</th>
             <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 1)">Price Close</th>
             <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 2)">Price Change</th>
             <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 3)">Price Change %</th>
             <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 4)">Volume Total</th>
-            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 5)">Volume Negotiated</th>
+            <th data-shortcut="v/V">
+              <div onclick="sortTable(this, <%= group.parameterize.inspect %>, 5, 'value')">Volume Negotiated</div>
+              <div onclick="sortTable(this, <%= group.parameterize.inspect %>, 5, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
+            </th>
             <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 6)">Value Total</th>
             <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 7)">Value Negotiated</th>
-            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 8)">Value Foreign Net</th>
+            <th data-shortcut="f/F">
+              <div onclick="sortTable(this, <%= group.parameterize.inspect %>, 8, 'value')">Value Foreign Net</div>
+              <div onclick="sortTable(this, <%= group.parameterize.inspect %>, 8, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
+            </th>
             <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 9)">Foreign Buy</th>
             <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 10)">Foreign Sell</th>
             <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 11)">Foreign Own Rate %</th>
-            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 12)">Proprietary Buy</th>
-            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 13)">Proprietary Sell</th>
-            <th>Note</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 12)">Value Proprietary Buy</th>
+            <th onclick="sortTable(this, <%= group.parameterize.inspect %>, 13)">Value Proprietary Sell</th>
+            <th data-shortcut="p/P">
+              <div onclick="sortTable(this, <%= group.parameterize.inspect %>, 14, 'value')">Value Proprietary Net</div>
+              <div onclick="sortTable(this, <%= group.parameterize.inspect %>, 14, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
+            </th>
           </tr>
           </thead>
           <tbody>
           <% sorted_records.each do |rec| %>
             <% ticker = rec[:ticker] %>
-            <% trading = rec[:trading_day] %>
-            <% color = presenter.row_color(trading.price_change_pct) %>
-            <% vol_neg = trading.volume_negotiated.to_i %>
+            <% trading = rec[:trading_day] %>            <% color = presenter.row_color(trading.price_change_pct) %>
             <% vol_total = trading.volume_total.to_i %>
-            <% bold_vol = (vol_total > 0 && vol_neg.to_f / vol_total > 0.2) %>
+            <% vol_neg = trading.volume_negotiated.to_i %>
+            <% vol_neg_percent = vol_total > 0 ? ((vol_neg.to_f / vol_total) * 100).round(2) : 0 %>
+            <% bold_vol = vol_total > 0 && vol_neg.to_f / vol_total > 0.2 %>
             <% bold_val = bold_vol %>
+            <% share_listed = trading.share_listed.to_i %>
             <% percent_foreign_net = vol_total > 0 ? ((trading.volume_foreign_net.to_f / vol_total * 100).round(2)) : 0 %>
             <% bold_foreign_net = percent_foreign_net.abs > 10 %>
-            <% share_listed = trading.share_listed.to_i %>
             <% bold_value_total = (share_listed > 0 && vol_total.to_f / share_listed > 0.05) %>
+            <% value_prop_net = trading.value_proprietary_buy.to_i - trading.value_proprietary_sell.to_i %>
+            <% percent_prop_net = trading.value_total.to_i > 0 ? ((value_prop_net.to_f / trading.value_total.to_i * 100).round(2)) : 0 %>
+            <% bold_prop_net = percent_prop_net.abs > 10 %>
             <tr>
-              <td style="background-color: <%= color %>"><%= ticker.symbol %></td>
+              <td style="background-color: <%= color %>; position: relative; cursor: pointer;">
+                <span class="symbol-tooltip-trigger"><%= ticker.symbol %></span>
+                <div class="symbol-tooltip-table" style="display:none; position:absolute; left:100%; top:100%; z-index:10; background:#fff; border:1px solid #ccc; box-shadow:0 2px 8px rgba(0,0,0,0.15); padding:8px; min-width:180px;">
+                  <table class="table table-bordered table-sm mb-0" style="font-size:0.95em;">
+                    <thead>
+                      <tr><th>Level</th><th colspan="2" class="text-center">Bid</th><th colspan="2" class="text-center">Ask</th></tr>
+                      <tr>
+                        <th></th><th>Price</th><th>Vol</th>
+                        <th>Price</th><th>Vol</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% 1.upto(3) do |i| %>                      <tr>
+                          <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= i %></td>
+                          <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= (trading.send("market_depth_bid_price_#{i}").to_f / 1000.0).round(1) %></td>
+                          <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= number_with_delimiter(trading.send("market_depth_bid_volume_#{i}")) %></td>
+                          <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= (trading.send("market_depth_ask_price_#{i}").to_f / 1000.0).round(1) %></td>
+                          <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= number_with_delimiter(trading.send("market_depth_ask_volume_#{i}")) %></td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
               <td style="background-color: <%= color %>"><%= trading.price_close.present? ? (trading.price_close.to_f / 1000.0).round(1) : '' %></td>
               <td style="background-color: <%= color %>"><%= number_with_delimiter(trading.price_change.to_i) %></td>
-              <td style="background-color: <%= color %>"><%= number_with_delimiter(trading.price_change_pct) %> %</td>
-              <td style="background-color: <%= color %>"><%= number_with_delimiter(vol_total) %></td>
+              <td style="background-color: <%= color %>"><%= number_with_delimiter(trading.price_change_pct) %> %</td>              <td style="background-color: <%= color %>"><%= number_with_delimiter(vol_total) %></td>
               <td style="background-color: <%= color %>; font-weight: <%= bold_vol ? 'bold' : 'normal' %>">
                 <%= number_with_delimiter(vol_neg) %>
-                <% if bold_vol %>
-                  <span style="font-weight: bold; color: #d9534f;">(<%= ((vol_neg.to_f / vol_total) * 100).round(1) %>%)</span>
-                <% end %>
+                <div style="font-weight: <%= bold_vol ? 'bold' : 'normal' %>; color: <%= bold_vol ? '#d9534f' : '#6c757d' %>; font-size: 0.95em;">
+                  (<%= vol_neg_percent %> %)
+                </div>
               </td>
               <td style="background-color: <%= color %>; font-weight: <%= bold_value_total ? 'bold' : 'normal' %>">
-                <%= display_billion(trading.value_total) %>
+                <%= display_billion(trading.value_total.to_i) %>
                 <% if bold_value_total %>
                   <div style="font-weight: bold; color: #d9534f; font-size: 0.95em;">
                     (<%= ((vol_total.to_f / share_listed) * 100).round(1) %>%)
                   </div>
                 <% end %>
               </td>
-              <td style="background-color: <%= color %>; font-weight: <%= bold_val ? 'bold' : 'normal' %>"><%= display_billion(trading.value_negotiated) %></td>
-              <td style="background-color: <%= color %>; font-weight: <%= bold_foreign_net ? 'bold' : 'normal' %>">
-                <%= display_billion(trading.value_foreign_net) %>
-                <% if percent_foreign_net != 0 %>
-                  <div style="font-weight: bold; color: #0275d8; font-size: 0.95em;">
-                    (<%= percent_foreign_net %> %)
-                  </div>
-                <% end %>
+              <td style="background-color: <%= color %>; font-weight: <%= bold_val ? 'bold' : 'normal' %>">
+                <%= display_billion(trading.value_negotiated.to_i) %>
               </td>
-              <td style="background-color: <%= color %>"><%= number_with_delimiter(trading.volume_foreign_buy.to_i) %></td>
-              <td style="background-color: <%= color %>">-<%= number_with_delimiter(trading.volume_foreign_sell.to_i) %></td>
-              <td style="background-color: <%= color %>"><%= trading.share_foreign_own_rate.present? ? trading.share_foreign_own_rate.round(2) : '' %> %</td>
-              <td style="background-color: <%= color %>"><%= number_with_delimiter(trading.volume_proprietary_buy.to_i) %></td>
-              <td style="background-color: <%= color %>"><%= number_with_delimiter(trading.volume_proprietary_sell.to_i) %></td>
-              <td style="background-color: <%= color %>"></td>
+              <td style="background-color: <%= color %>; font-weight: <%= bold_foreign_net ? 'bold' : 'normal' %>">
+                <%= display_billion(trading.value_foreign_net.to_i) %>
+                <div style="font-weight: <%= bold_foreign_net ? 'bold' : 'normal' %>; color: <%= percent_foreign_net > 0 ? '#198754' : '#dc3545' %>; font-size: 0.95em;">
+                  (<%= percent_foreign_net %> %)
+                </div>
+              </td>
+              <td style="background-color: <%= color %>">
+                <%= number_with_delimiter(trading.volume_foreign_buy.to_i) %>
+              </td>
+              <td style="background-color: <%= color %>">
+                <%= number_with_delimiter(trading.volume_foreign_sell.to_i.abs) %>
+              </td>
+              <td style="background-color: <%= color %>">
+                <%= number_with_delimiter(trading.share_foreign_own_rate) %> %
+              </td>
+              <td style="background-color: <%= color %>">
+                <%= display_billion(trading.value_proprietary_buy.to_i) %>
+              </td>
+              <td style="background-color: <%= color %>">
+                <%= display_billion(trading.value_proprietary_sell.to_i) %>
+              </td>
+              <td style="background-color: <%= color %>; font-weight: <%= bold_prop_net ? 'bold' : 'normal' %>">
+                <%= display_billion(value_prop_net) %>
+                <div style="font-weight: <%= bold_prop_net ? 'bold' : 'normal' %>; color: <%= percent_prop_net > 0 ? '#198754' : '#dc3545' %>; font-size: 0.95em;">
+                  (<%= percent_prop_net %> %)
+                </div>
+              </td>
             </tr>
           <% end %>
           </tbody>
@@ -82,37 +130,207 @@
     </div>
   <% end %>
 </div>
-<style>
-  .table th, .table td {
+<style>  .table th, .table td {
     padding-top: 0.25rem !important;
     padding-bottom: 0.25rem !important;
     padding-left: 0.5rem !important;
     padding-right: 0.5rem !important;
     font-size: 0.95em;
   }
+
+  /* Column specific widths */
+  .table th:nth-child(1), .table td:nth-child(1) { min-width: 80px; }  /* Symbol */
+  .table th:nth-child(2), .table td:nth-child(2) { min-width: 80px; }  /* Price Close */
+  .table th:nth-child(3), .table td:nth-child(3) { min-width: 80px; }  /* Price Change */
+  .table th:nth-child(4), .table td:nth-child(4) { min-width: 90px; }  /* Price Change % */
+  .table th:nth-child(5), .table td:nth-child(5) { min-width: 100px; } /* Volume Total */
+  .table th:nth-child(6), .table td:nth-child(6) { min-width: 120px; } /* Volume Negotiated + % */
+  .table th:nth-child(7), .table td:nth-child(7) { min-width: 90px; }  /* Value Total */
+  .table th:nth-child(8), .table td:nth-child(8) { min-width: 100px; } /* Value Negotiated */
+  .table th:nth-child(9), .table td:nth-child(9) { min-width: 120px; } /* Value Foreign Net */
+  .table th:nth-child(10), .table td:nth-child(10) { min-width: 100px; } /* Foreign Buy */
+  .table th:nth-child(11), .table td:nth-child(11) { min-width: 100px; } /* Foreign Sell */
+  .table th:nth-child(12), .table td:nth-child(12) { min-width: 90px; }  /* Foreign Own Rate % */
+  .table th:nth-child(13), .table td:nth-child(13) { min-width: 120px; } /* Value Proprietary Buy */
+  .table th:nth-child(14), .table td:nth-child(14) { min-width: 120px; } /* Value Proprietary Sell */
+  .table th:nth-child(15), .table td:nth-child(15) { min-width: 130px; } /* Value Proprietary Net */
+
+  /* Styles for the dual-sort header */
+  th div {
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+  
+  th div:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  th div.sorted::after {
+    content: ' ↓';
+  }
+  
+  th div.sorted.asc::after {
+    content: ' ↑';
+  }
+
+  /* Shortcut hints */
+  th[data-shortcut]::after {
+    content: attr(data-shortcut);
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    font-size: 0.8em;
+    opacity: 0.7;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
 </style>
 <script>
-function sortTable(header, groupId, colIndex) {
+function sortTable(header, groupId, colIndex, sortType = 'value') {
   var table = header.closest('table');
   var tbody = table.tBodies[0];
   var rows = Array.from(tbody.rows);
   var asc = header.asc = !header.asc;
+  
   rows.sort(function(a, b) {
-    var aText = a.cells[colIndex].innerText.replace(/,/g, '').replace(/ %/g, '');
-    var bText = b.cells[colIndex].innerText.replace(/,/g, '').replace(/ %/g, '');
-    var aNum = parseFloat(aText);
-    var bNum = parseFloat(bText);
-    if (!isNaN(aNum) && !isNaN(bNum)) {
-      return asc ? aNum - bNum : bNum - aNum;
+    function extractValue(element, type) {
+      var cell = element.cells[colIndex];
+      var text = cell.innerText.replace(/,/g, '');
+      
+      if (type === 'percent') {
+        // Look for percentage in a div element first (for combined columns)
+        var percentDiv = cell.querySelector('div');
+        if (percentDiv) {
+          var percentMatch = percentDiv.innerText.match(/\(([-\d.]+)/);
+          return percentMatch ? parseFloat(percentMatch[1]) : 0;
+        }
+        // If no div found, try to find percentage in the main text
+        var percentInText = text.match(/\(([-\d.]+)/);
+        return percentInText ? parseFloat(percentInText[1]) : 0;
+      } else {
+        // For value sorting, get the first number in the cell
+        var mainValue = text.split('(')[0].trim().match(/([-\d.]+)/);
+        return mainValue ? parseFloat(mainValue[1]) : 0;
+      }
+    }
+    
+    var aVal = extractValue(a, sortType);
+    var bVal = extractValue(b, sortType);
+    
+    if (!isNaN(aVal) && !isNaN(bVal)) {
+      return asc ? aVal - bVal : bVal - aVal;
     } else {
+      var aText = a.cells[colIndex].innerText;
+      var bText = b.cells[colIndex].innerText;
       return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
     }
   });
+  
   rows.forEach(function(row) { tbody.appendChild(row); });
+  
+  // Update sort indicators on the header
+  var headerDiv = sortType === 'percent' ? header.querySelector('div:last-child') : header;
+  if (headerDiv) {
+    // Remove sorted class from all headers in the column
+    header.querySelectorAll('div').forEach(div => {
+      div.classList.remove('sorted', 'asc');
+    });
+    headerDiv.classList.add('sorted');
+    headerDiv.classList.toggle('asc', asc);
+  }
 }
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.symbol-tooltip-trigger').forEach(function(el) {
+    el.addEventListener('mouseenter', function() {
+      var tooltip = el.nextElementSibling;
+      if (tooltip) {
+        tooltip.style.display = 'block';
+        tooltip.style.left = '';
+        tooltip.style.right = '';
+        tooltip.style.top = '';
+        tooltip.style.bottom = '';
+
+        // Wait for DOM to update
+        setTimeout(function() {
+          var rect = tooltip.getBoundingClientRect();
+          var parentRect = el.parentElement.getBoundingClientRect();
+          var winHeight = window.innerHeight || document.documentElement.clientHeight;
+          var winWidth = window.innerWidth || document.documentElement.clientWidth;
+          var tableContainer = el.closest('.table-responsive');
+          var containerRect = tableContainer.getBoundingClientRect();
+
+          // Check if this is one of the last 3 visible rows
+          var row = el.closest('tr');
+          var table = row.closest('table');
+          var rows = Array.from(table.querySelectorAll('tbody tr'));
+          var visibleRows = rows.filter(function(r) {
+            var rowRect = r.getBoundingClientRect();
+            return rowRect.top < containerRect.bottom && rowRect.bottom > containerRect.top;
+          });
+          var rowIndex = visibleRows.indexOf(row);
+          var isLastThreeRows = rowIndex >= visibleRows.length - 3;
+
+          // Position horizontally first
+          if (rect.right > winWidth) {
+            tooltip.style.left = 'auto';
+            tooltip.style.right = '100%';
+          } else {
+            tooltip.style.left = '100%';
+            tooltip.style.right = 'auto';
+          }
+
+          // Then position vertically
+          if (isLastThreeRows) {
+            // For last 3 rows, position above
+            tooltip.style.top = 'auto';
+            tooltip.style.bottom = '100%';
+            
+            // Additional adjustment if needed
+            var tooltipRect = tooltip.getBoundingClientRect();
+            if (tooltipRect.top < containerRect.top) {
+              tooltip.style.bottom = 'auto';
+              tooltip.style.top = '-50%';
+            }
+          } else {
+            // For other rows, position below
+            tooltip.style.top = '0';
+            tooltip.style.bottom = 'auto';
+            
+            // Adjust if overflowing bottom
+            var tooltipRect = tooltip.getBoundingClientRect();
+            if (tooltipRect.bottom > containerRect.bottom) {
+              tooltip.style.top = 'auto';
+              tooltip.style.bottom = '0';
+            }
+          }
+
+          // Ensure tooltip stays within container bounds
+          var updatedRect = tooltip.getBoundingClientRect();
+          if (updatedRect.bottom > containerRect.bottom) {
+            var adjustment = updatedRect.bottom - containerRect.bottom + 10; // 10px padding
+            tooltip.style.top = (tooltip.offsetTop - adjustment) + 'px';
+          }
+          if (updatedRect.top < containerRect.top) {
+            tooltip.style.top = (containerRect.top - parentRect.top + 5) + 'px';
+          }
+        }, 0);
+      }
+    });
+    el.addEventListener('mouseleave', function() {
+      var tooltip = el.nextElementSibling;
+      if (tooltip) { tooltip.style.display = 'none'; }
+    });
+    el.parentElement.addEventListener('mouseleave', function() {
+      var tooltip = el.nextElementSibling;
+      if (tooltip) { tooltip.style.display = 'none'; }
+    });
+  });
+});
 </script>
 <%# Helper for displaying value in billions with 3 decimals and B suffix %>
 <% def display_billion(val)
      v = val.to_f / 1_000_000_000
      v.abs >= 0.001 ? ("#{v.round(3)}B") : number_with_delimiter(val.to_i)
-   end %>
+end %>

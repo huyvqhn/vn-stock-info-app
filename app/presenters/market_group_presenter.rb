@@ -48,6 +48,27 @@ class MarketGroupPresenter
     end
   end
 
+  def self.group_trading_days
+    # First get the most recent trading date
+    most_recent_date = StockTradingDay.maximum(:trading_date)
+
+    # Get all records for that date, grouped by group
+    trading_records = StockTradingDay.where(trading_date: most_recent_date)
+                                   .includes(ticker: :group)
+                                   .order("tickers.symbol")
+
+    # Group records by group name
+    trading_records.group_by { |trading_day| trading_day.ticker.group&.name }
+                  .transform_values do |group_records|
+      group_records.map do |trading_day|
+        {
+          ticker: trading_day.ticker,
+          trading_day: trading_day
+        }
+      end
+    end
+  end
+
   private
 
 
