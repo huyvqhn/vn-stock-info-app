@@ -39,8 +39,24 @@ class LatestTradingDaysController < ApplicationController
           sum_volume_foreign_sell: trading_day.volume_foreign_sell,
           sum_value_proprietary_buy: trading_day.value_proprietary_buy,
           sum_value_proprietary_sell: trading_day.value_proprietary_sell,
+          sum_share_listed: trading_day.share_listed,
           share_foreign_max_allowed: trading_day.share_foreign_max_allowed,
-          share_foreign_add_allowed: trading_day.share_foreign_add_allowed
+          share_foreign_add_allowed: trading_day.share_foreign_add_allowed,
+          # foreign_own_sub_percent: (
+          #   if trading_day.share_foreign_max_allowed && trading_day.share_foreign_add_allowed && trading_day.share_listed.to_i > 0
+          #     (((trading_day.share_foreign_max_allowed.to_f - trading_day.share_foreign_add_allowed.to_f) / trading_day.share_listed.to_f) * 100).round(2)
+          #   else
+          #     nil
+          #   end
+          # )
+
+          foreign_own_sub_percent: (
+            if trading_day&.share_foreign_max_allowed && trading_day&.share_foreign_add_allowed && trading_day&.share_listed.to_i > 0
+              (((trading_day.share_foreign_max_allowed.to_f - trading_day.share_foreign_add_allowed.to_f) / trading_day.share_listed.to_f) * 100).round(2)
+            else
+              nil
+            end
+          )
         }
       }
     end
@@ -75,9 +91,16 @@ class LatestTradingDaysController < ApplicationController
           sum_volume_foreign_sell: days.sum(:volume_foreign_sell),
           sum_value_proprietary_buy: days.sum(:value_proprietary_buy),
           sum_value_proprietary_sell: days.sum(:value_proprietary_sell),
-          sum_value_proprietary_net: days.sum("value_proprietary_buy - value_proprietary_sell"),
+          sum_share_listed: days.sum(:share_listed),
           share_foreign_max_allowed: last_day&.share_foreign_max_allowed,
-          share_foreign_add_allowed: last_day&.share_foreign_add_allowed
+          share_foreign_add_allowed: last_day&.share_foreign_add_allowed,
+          foreign_own_sub_percent: (
+            if last_day&.share_foreign_max_allowed && last_day&.share_foreign_add_allowed && last_day&.share_listed.to_i > 0
+              (((last_day.share_foreign_max_allowed.to_f - last_day.share_foreign_add_allowed.to_f) / last_day.share_listed.to_f) * 100).round(2)
+            else
+              nil
+            end
+          )
         }
       }
     end.compact.sort_by { |rec| rec[:ticker].symbol }

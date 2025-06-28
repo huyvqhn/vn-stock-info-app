@@ -6,36 +6,50 @@
     <thead class="table-dark" style="position: sticky; top: 0; z-index: 2;">
     <tr>
       <th><div onclick="sortTable(this, '<%= table_id %>', 0)">Symbol</div></th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 1)">Group</div></th>
+      <th>
+        <div onclick="sortTable(this, '<%= table_id %>', 1)">Group</div>
+        <select id="group-filter-<%= table_id %>" class="form-select form-select-sm mt-1" style="width: 120px; font-size: 0.95em;">
+          <option value="">All</option>
+          <% Array(records).map { |rec| rec[:ticker].group&.name }.uniq.compact.sort.each do |group_name| %>
+            <option value="<%= group_name %>"><%= group_name %></option>
+          <% end %>
+        </select>
+      </th>
       <th><div onclick="sortTable(this, '<%= table_id %>', 2)">Price Close</div></th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 3)">Price Change</div></th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 4)">Price Change %</div></th>
       <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 5, 'value')">Volume Total</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 5, 'vol_total_percent')" style="font-size: 0.9em; color: #6c757d;">% of Listed</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 3)">Price Change</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 3, 'percent')" style="font-size: 0.9em; color: #6c757d;">%</div>
       </th>
       <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 6, 'value')">Volume Negotiated</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 6, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 4, 'value')">Volume Total</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 4, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Listed</div>
       </th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 7)">Value Total</div></th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 8)">Value Negotiated</div></th>
       <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 9, 'billion')">Value Foreign Net</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 9, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 5, 'value')">Volume Negotiated</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 5, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
       </th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 10)">Volume Foreign Net</div></th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 11, 'billion')">Value Foreign Buy</div></th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 12, 'abs_billion')">Value Foreign Sell</div></th>
+      <th><div onclick="sortTable(this, '<%= table_id %>', 6)">Val Total</div></th>
+      <th><div onclick="sortTable(this, '<%= table_id %>', 7)">Val Negotiated</div></th>
       <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 13)">Foreign Capacity %</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 13, 'foreign_own_sub')">Foreign Own %</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 8, 'billion')">Val Foreign Net</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 8, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
       </th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 14)">Value Proprietary Buy</div></th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 15)">Value Proprietary Sell</div></th>
+      <th><div onclick="sortTable(this, '<%= table_id %>', 9)">Volume Foreign Net</div></th>
       <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 16, 'value')">Value Proprietary Net</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 16, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 10, 'billion')">Val Foreign Buy</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 10, 'abs_billion')" style="font-size: 0.9em; color: #6c757d;">Val Foreign Sell</div>
+      </th>
+      <th>
+        <div onclick="sortTable(this, '<%= table_id %>', 11)">Foreign to Capacity %</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 11, 'foreign_own_sub')" style="font-size: 0.9em; color: #6c757d;">Foreign Own %</div>
+      </th>
+      <th>
+        <div onclick="sortTable(this, '<%= table_id %>', 12)">Val Proprietary Buy</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 12)" style="font-size: 0.9em; color: #6c757d;">Val Proprietary Sell</div>
+      </th>
+      <th>
+        <div onclick="sortTable(this, '<%= table_id %>', 13, 'value')">Val Proprietary Net</div>
+        <div onclick="sortTable(this, '<%= table_id %>', 13, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
       </th>
     </tr>
     </thead>
@@ -54,6 +68,7 @@
         <% value_prop_sell = agg[:sum_value_proprietary_sell] ? agg[:sum_value_proprietary_sell].to_i : 0 %>
         <% value_prop_net = value_prop_buy - value_prop_sell %>
         <% sum_value_total = agg[:sum_value_total] ? agg[:sum_value_total].to_i : 0 %>
+        <% sum_share_listed = agg[:sum_share_listed] ? agg[:sum_share_listed].to_i : 0 %>
         <% percent_prop_net = sum_value_total > 0 ? ((value_prop_net.to_f / sum_value_total) * 100).round(2) : 0 %>
         <% value_negotiated = agg[:sum_value_negotiated] ? agg[:sum_value_negotiated].to_i : 0 %>
         <% value_foreign_net = agg[:sum_value_foreign_net] ? agg[:sum_value_foreign_net].to_i : 0 %>
@@ -89,13 +104,17 @@
           </td>
           <td style="background-color: <%= color %>"><%= ticker.group&.name %></td>
           <td style="background-color: <%= color %>"><%= agg[:last_price_close].present? ? (agg[:last_price_close].to_f / 1000.0).round(1) : '' %></td>
-          <td style="background-color: <%= color %>"><%= number_with_delimiter(agg[:sum_price_change].to_i) %></td>
-          <td style="background-color: <%= color %>" ><%= number_with_delimiter(agg[:sum_price_change_pct]) %> %</td>
+          <td style="background-color: <%= color %>">
+            <%= number_with_delimiter(agg[:sum_price_change].to_i) %>
+            <div style="font-size: 0.95em; color: #6c757d;">
+              (<%= number_with_delimiter(agg[:sum_price_change_pct]) %>% )
+            </div>
+          </td>
           <td style="background-color: <%= color %>"> 
             <%= number_with_delimiter(vol_total) %>
             <% if share_listed > 0 %>
-              <% percent_of_listed = ((vol_total.to_f / share_listed) * 100).round(2) %>
-              <div class="vol-total-percent" style="font-weight: <%= percent_of_listed > 2 ? 'bold' : 'normal' %>;color: <%= percent_of_listed > 2 ? '#d9534f' : '#6c757d' %>; font-size: 0.95em;">
+              <% percent_of_listed = ((vol_total.to_f / sum_share_listed) * 100).round(2) %>
+              <div style="font-weight: <%= percent_of_listed > 2 ? 'bold' : 'normal' %>;color: <%= percent_of_listed > 2 ? '#d9534f' : '#6c757d' %>; font-size: 0.95em;">
                 (<%= percent_of_listed %>%)
               </div>
             <% end %>
@@ -115,18 +134,25 @@
             </div>
           </td>
           <td style="background-color: <%= color %>"><%= number_with_delimiter(volume_foreign_net) %></td>
-          <td style="background-color: <%= color %>;"><span style="color: #198754; font-weight: bold;"><%= display_billion(value_foreign_buy) %></span></td>
-          <td style="background-color: <%= color %>;"><span style="color: #dc3545; font-weight: bold;">-<%= display_billion(value_foreign_sell.abs) %></span></td>
-          <td style="background-color: <%= color %>">
+          <td style="background-color: <%= color %>;">
+            <span style="color: #198754; font-weight: bold;"><%= display_billion(value_foreign_buy) %></span>
+            <div style="font-size: 0.95em; color: #dc3545;">
+              - <span style="font-weight: bold;"><%= display_billion(value_foreign_sell.abs) %></span>
+            </div>
+          </td>
+          <td style="background-color: <%= color %>; font-weight: <%= share_foreign_own_rate.to_f > 15 ? 'bold' : 'normal' %>">
             <%= share_foreign_own_rate %> %
-            <% if agg[:share_foreign_max_allowed] && agg[:share_foreign_add_allowed] && share_listed > 0 %>
-              <div style="font-size:0.95em;color:#6c757d;">
-                (<%= (((agg[:share_foreign_max_allowed].to_f - agg[:share_foreign_add_allowed].to_f) / share_listed) * 100).round(2) %>%)
+            <% if agg[:foreign_own_sub_percent] %>
+              <div style="font-size:0.95em; color:#198754;">
+                (<%= agg[:foreign_own_sub_percent] %>%)
               </div>
             <% end %>
           </td>
-          <td style="background-color: <%= color %>"><%= display_billion(value_prop_buy) %></td>
-          <td style="background-color: <%= color %>"><%= display_billion(value_prop_sell) %></td>
+          <td style="background-color: <%= color %>"><%= display_billion(value_prop_buy) %>
+            <div style="font-size: 0.95em; color: #dc3545;">
+              - <span style="font-weight: bold;"><%= display_billion(value_prop_sell.abs) %></span>
+            </div>          
+          </td>
           <td style="background-color: <%= color %>; font-weight: <%= percent_prop_net.abs > 10 ? 'bold' : 'normal' %>">
             <%= "#{(value_prop_net.to_f / 1_000_000_000).round(3)}B" %>
             <div style="font-weight: <%= percent_prop_net.abs > 10 ? 'bold' : 'normal' %>; color: <%= percent_prop_net > 0 ? '#198754' : (percent_prop_net < 0 ? '#dc3545' : '#6c757d') %>; font-size: 0.95em;">
@@ -145,55 +171,155 @@
 <script>
   // ...existing code...
   function sortTable(header, tableId, colIndex, sortType = 'value') {
-    var table = header.closest('table');
-    var tbody = table.tBodies[0];
-    var rows = Array.from(tbody.rows);
-    // For percentage columns, default to descending on first click
-    if (sortType === 'vol_total_percent') {
-      header.asc = header.asc === undefined ? false : !header.asc;
-    } else {
-      header.asc = !header.asc;
-    }
-    var asc = header.asc;
+      var table = header.closest('table');
+      var tbody = table.tBodies[0];
+      var rows = Array.from(tbody.rows);
+      var asc = header.asc = !header.asc;
 
-    rows.sort(function(a, b) {
-      function extractValue(element, type) {
-        var cell = element.cells[colIndex];
-        var text = cell.innerText.replace(/,/g, '');
-        if (type === 'vol_total_percent') {
-          // Only extract from the .vol-total-percent div for this column
-          var percentDiv = cell.querySelector('.vol-total-percent');
-          if (percentDiv) {
-            var percentMatch = percentDiv.innerText.match(/\(([-\d.]+)/);
-            return percentMatch ? parseFloat(percentMatch[1]) : 0;
+      rows.sort(function(a, b) {
+          function extractValue(element, type) {
+              var cell = element.cells[colIndex];
+              var text = cell.innerText.replace(/,/g, '');
+              if (colIndex === 1) { // Group column: always string sort
+                  return text.trim();
+              }
+              if (type === 'percent') {
+                  var percentDiv = cell.querySelector('div');
+                  if (percentDiv) {
+                      var percentMatch = percentDiv.innerText.match(/\(([-\d.]+)/);
+                      return percentMatch ? parseFloat(percentMatch[1]) : 0;
+                  }
+                  var percentInText = text.match(/\(([-\d.]+)/);
+                  return percentInText ? parseFloat(percentInText[1]) : 0;
+              } else if (type === 'abs_billion') {
+                  var sellDiv = cell.querySelector('div:last-child');
+                  var valueText = sellDiv ? sellDiv.innerText : text;
+                  var hasB = valueText.includes('B');
+                  var numberMatch = valueText.match(/-?[\d.]+/);
+                  if (!numberMatch) return 0;
+                  var value = parseFloat(numberMatch[0]);
+                  value = Math.abs(value);
+                  return hasB ? value * 1e9 : value;
+              } else if (type === 'billion') {
+                  var buyDiv = cell.querySelector('div:first-child');
+                  var valueText = buyDiv ? buyDiv.innerText : text;
+                  var hasB = valueText.includes('B');
+                  var numberMatch = valueText.match(/-?[\d.]+/);
+                  if (!numberMatch) return 0;
+                  var value = parseFloat(numberMatch[0]);
+                  return hasB ? value * 1e9 : value;
+              } else if (type === 'value') {
+                  var mainDiv = cell.querySelector('div') ? cell.childNodes[0] : null;
+                  var valueText = mainDiv ? mainDiv.textContent : text.split('(')[0].trim();
+                  var hasB = valueText.includes('B');
+                  var numberMatch = valueText.match(/-?[\d.]+/);
+                  if (!numberMatch) return 0;
+                  var value = parseFloat(numberMatch[0]);
+                  return hasB ? value * 1e9 : value;
+              } else {
+                  var valueText = text.split('(')[0].trim();
+                  var hasB = valueText.includes('B');
+                  var numberMatch = valueText.match(/-?[\d.]+/);
+                  if (!numberMatch) return 0;
+                  var value = parseFloat(numberMatch[0]);
+                  return hasB ? value * 1e9 : value;
+              }
           }
-          // Fallback: try to find percentage in the main text
-          var percentInText = text.match(/\(([-\d.]+)/);
-          return percentInText ? parseFloat(percentInText[1]) : 0;
-        } else if (type === 'percent') {
-          // For other percent columns, use the first div or text
-          var percentDiv = cell.querySelector('div');
-          if (percentDiv) {
-            var percentMatch = percentDiv.innerText.match(/\(([-\d.]+)/);
-            return percentMatch ? parseFloat(percentMatch[1]) : 0;
+          var aVal = extractValue(a, sortType);
+          var bVal = extractValue(b, sortType);
+          if (colIndex === 1) {
+              return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
           }
-          var percentInText = text.match(/\(([-\d.]+)/);
-          return percentInText ? parseFloat(percentInText[1]) : 0;
-        }
-        return isNaN(text) ? text : parseFloat(text);
+          if (!isNaN(aVal) && !isNaN(bVal)) {
+              if (sortType === 'abs_billion') {
+                  return asc ? aVal - bVal : bVal - aVal;
+              }
+              return asc ? aVal - bVal : bVal - aVal;
+          } else {
+              var aText = a.cells[colIndex].innerText;
+              var bText = b.cells[colIndex].innerText;
+              return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+          }
+      });
+      rows.forEach(function(row) { tbody.appendChild(row); });
+      var headerDiv = sortType === 'percent' ? header.querySelector('div:last-child') : header;
+      if (headerDiv) {
+          table.querySelectorAll('th div').forEach(div => {
+              div.classList.remove('sorted', 'asc');
+          });
+          headerDiv.classList.add('sorted');
+          headerDiv.classList.toggle('asc', asc);
       }
-
-      var aValue = extractValue(a, sortType);
-      var bValue = extractValue(b, sortType);
-      if (aValue === bValue) return 0;
-      if (aValue === -Infinity) return 1;
-      if (bValue === -Infinity) return -1;
-      return (aValue < bValue ? -1 : 1) * (asc ? 1 : -1);
-    });
-
-    rows.forEach(function(row) {
-      tbody.appendChild(row);
-    });
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[id^="group-filter-"]').forEach(function(select) {
+      select.addEventListener('change', function() {
+        var tableId = select.id.replace('group-filter-', '');
+        var table = document.getElementById(tableId).closest('table');
+        var groupIdx = 1; // Group column index
+        var value = select.value;
+        Array.from(table.tBodies[0].rows).forEach(function(row) {
+          var cell = row.cells[groupIdx];
+          if (!value || (cell && cell.innerText.trim() === value)) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      });
+    });
+  });
+  // function sortTable(header, tableId, colIndex, sortType = 'value') {
+  //   var table = header.closest('table');
+  //   var tbody = table.tBodies[0];
+  //   var rows = Array.from(tbody.rows);
+  //   // For percentage columns, default to descending on first click
+  //   if (sortType === 'vol_total_percent') {
+  //     header.asc = header.asc === undefined ? false : !header.asc;
+  //   } else {
+  //     header.asc = !header.asc;
+  //   }
+  //   var asc = header.asc;
+  //
+  //   rows.sort(function(a, b) {
+  //     function extractValue(element, type) {
+  //       var cell = element.cells[colIndex];
+  //       var text = cell.innerText.replace(/,/g, '');
+  //       if (type === 'vol_total_percent') {
+  //         // Only extract from the .vol-total-percent div for this column
+  //         var percentDiv = cell.querySelector('.vol-total-percent');
+  //         if (percentDiv) {
+  //           var percentMatch = percentDiv.innerText.match(/\(([-\d.]+)/);
+  //           return percentMatch ? parseFloat(percentMatch[1]) : 0;
+  //         }
+  //         // Fallback: try to find percentage in the main text
+  //         var percentInText = text.match(/\(([-\d.]+)/);
+  //         return percentInText ? parseFloat(percentInText[1]) : 0;
+  //       } else if (type === 'percent') {
+  //         // For other percent columns, use the first div or text
+  //         var percentDiv = cell.querySelector('div');
+  //         if (percentDiv) {
+  //           var percentMatch = percentDiv.innerText.match(/\(([-\d.]+)/);
+  //           return percentMatch ? parseFloat(percentMatch[1]) : 0;
+  //         }
+  //         var percentInText = text.match(/\(([-\d.]+)/);
+  //         return percentInText ? parseFloat(percentInText[1]) : 0;
+  //       }
+  //       return isNaN(text) ? text : parseFloat(text);
+  //     }
+  //
+  //     var aValue = extractValue(a, sortType);
+  //     var bValue = extractValue(b, sortType);
+  //     if (aValue === bValue) return 0;
+  //     if (aValue === -Infinity) return 1;
+  //     if (bValue === -Infinity) return -1;
+  //     return (aValue < bValue ? -1 : 1) * (asc ? 1 : -1);
+  //   });
+  //
+  //   rows.forEach(function(row) {
+  //     tbody.appendChild(row);
+  //   });
+  // }
   // ...existing code...
 </script>
