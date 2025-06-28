@@ -1,0 +1,256 @@
+<%# Aggregated 5-day view, styled and formatted like all.html.erb %>
+<% presenter = MarketGroupPresenter %>
+<div class="container">
+  <div class="mb-5">
+    <div class="table-responsive" style="max-height: 1020px; overflow-y: auto;">
+      <%= render partial: 'latest_trading_days/tickers_table', locals: {
+        records: @aggregated_records,
+        presenter: MarketGroupPresenter,
+        table_id: '5d-tickers',
+        table_title: 'Aggregated (Last 5 Trading Days)',
+        is_aggregate_5d: true
+      } %>
+    </div>
+  </div>
+</div>
+
+<style>  .container {
+    max-width: 98% !important;  /* Expand container to use more screen width */
+  }
+  
+  .table th, .table td {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.95em;
+  }
+  /* Column specific widths */  .table th:nth-child(1), .table td:nth-child(1) { min-width: 80px; }  /* Symbol */
+  .table th:nth-child(2), .table td:nth-child(2) { min-width: 120px; } /* Group */
+  .table th:nth-child(3), .table td:nth-child(3) { min-width: 80px; }  /* Price Close */
+  .table th:nth-child(4), .table td:nth-child(4) { min-width: 80px; } /* Price Change */
+  .table th:nth-child(5), .table td:nth-child(5) { min-width: 90px; } /* Price Change % */
+  .table th:nth-child(6), .table td:nth-child(6) { min-width: 100px; } /* Volume Total */
+  .table th:nth-child(7), .table td:nth-child(7) { min-width: 100px; } /* Volume Negotiated */
+  .table th:nth-child(8), .table td:nth-child(8) { min-width: 90px; } /* Volume Negotiated % */
+  .table th:nth-child(9), .table td:nth-child(9) { min-width: 90px; } /* Value Total */
+  .table th:nth-child(10), .table td:nth-child(10) { min-width: 100px; } /* Value Negotiated */
+  .table th:nth-child(11), .table td:nth-child(11) { min-width: 120px; } /* Value Foreign Net */
+  .table th:nth-child(12), .table td:nth-child(12) { min-width: 110px; } /* Volume Foreign Net */
+  .table th:nth-child(13), .table td:nth-child(13) { min-width: 90px; } /* Foreign Net % */
+  .table th:nth-child(14), .table td:nth-child(14) { min-width: 100px; } /* Foreign Buy */
+  .table th:nth-child(15), .table td:nth-child(15) { min-width: 100px; } /* Foreign Sell */
+  .table th:nth-child(16), .table td:nth-child(16) { min-width: 90px; } /* Foreign Own Rate % */
+  .table th:nth-child(17), .table td:nth-child(17) { min-width: 100px; } /* Proprietary Buy */
+  .table th:nth-child(18), .table td:nth-child(18) { min-width: 100px; } /* Proprietary Sell */
+  .table th:last-child, .table td:last-child { min-width: 60px; } /* Note */
+  
+  /* Styles for the dual-sort header */
+  th div {
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+  
+  th div:hover, th.sortable:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  th.sortable, th div.sortable {
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  th.sortable:focus, th div.sortable:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 1px;
+  }
+  .sort-icon {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+    margin-left: 2px;
+    opacity: 0.5;
+    font-size: 0.95em;
+  }
+  th.sortable:hover .sort-icon, th div.sortable:hover .sort-icon {
+    opacity: 1;
+  }
+  th .sort-icon:after, th div .sort-icon:after {
+    content: '\2195'; /* up-down arrow */
+    font-size: 0.9em;
+    color: #ccc;
+  }
+  th .sort-icon.sorted:after, th div .sort-icon.sorted:after {
+    content: '\2193'; /* down arrow */
+    color: #fff;
+  }
+  th .sort-icon.sorted.asc:after, th div .sort-icon.sorted.asc:after {
+    content: '\2191'; /* up arrow */
+    color: #fff;
+  }
+</style>
+
+<script>
+function sortTable(header, tableId, colIndex, sortType = 'value') {
+  var table = header.closest('table');
+  var tbody = table.tBodies[0];
+  var rows = Array.from(tbody.rows);
+  var asc = header.asc = !header.asc;
+
+  rows.sort(function(a, b) {
+    function extractValue(element, type) {
+      var cell = element.cells[colIndex];
+      var text = cell.innerText.replace(/,/g, '');
+      if (colIndex === 1) { // Group column: always string sort
+        return text.trim();
+      }
+      if (type === 'percent') {
+        var percentDiv = cell.querySelector('div');
+        if (percentDiv) {
+          var percentMatch = percentDiv.innerText.match(/\(([-\d.]+)/);
+          return percentMatch ? parseFloat(percentMatch[1]) : 0;
+        }
+        var percentInText = text.match(/\(([-\d.]+)/);
+        return percentInText ? parseFloat(percentInText[1]) : 0;
+      } else if (type === 'abs_billion') {
+        var sellDiv = cell.querySelector('div:last-child');
+        var valueText = sellDiv ? sellDiv.innerText : text;
+        var hasB = valueText.includes('B');
+        var numberMatch = valueText.match(/-?[\d.]+/);
+        if (!numberMatch) return 0;
+        var value = parseFloat(numberMatch[0]);
+        value = Math.abs(value);
+        return hasB ? value * 1e9 : value;
+      } else if (type === 'billion') {
+        var buyDiv = cell.querySelector('div:first-child');
+        var valueText = buyDiv ? buyDiv.innerText : text;
+        var hasB = valueText.includes('B');
+        var numberMatch = valueText.match(/-?[\d.]+/);
+        if (!numberMatch) return 0;
+        var value = parseFloat(numberMatch[0]);
+        return hasB ? value * 1e9 : value;
+      } else if (type === 'value') {
+        var mainDiv = cell.querySelector('div') ? cell.childNodes[0] : null;
+        var valueText = mainDiv ? mainDiv.textContent : text.split('(')[0].trim();
+        var hasB = valueText.includes('B');
+        var numberMatch = valueText.match(/-?[\d.]+/);
+        if (!numberMatch) return 0;
+        var value = parseFloat(numberMatch[0]);
+        return hasB ? value * 1e9 : value;
+      } else {
+        var valueText = text.split('(')[0].trim();
+        var hasB = valueText.includes('B');
+        var numberMatch = valueText.match(/-?[\d.]+/);
+        if (!numberMatch) return 0;
+        var value = parseFloat(numberMatch[0]);
+        return hasB ? value * 1e9 : value;
+      }
+    }
+    var aVal = extractValue(a, sortType);
+    var bVal = extractValue(b, sortType);
+    if (colIndex === 1) {
+      return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+    }
+    if (!isNaN(aVal) && !isNaN(bVal)) {
+      if (sortType === 'abs_billion') {
+        return asc ? aVal - bVal : bVal - aVal;
+      }
+      return asc ? aVal - bVal : bVal - aVal;
+    } else {
+      var aText = a.cells[colIndex].innerText;
+      var bText = b.cells[colIndex].innerText;
+      return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+    }
+  });
+  rows.forEach(function(row) { tbody.appendChild(row); });
+  var headerDiv = sortType === 'percent' ? header.querySelector('div:last-child') : header;
+  if (headerDiv) {
+    table.querySelectorAll('th div').forEach(div => {
+      div.classList.remove('sorted', 'asc');
+    });
+    headerDiv.classList.add('sorted');
+    headerDiv.classList.toggle('asc', asc);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.symbol-tooltip-trigger').forEach(function(el) {
+    el.addEventListener('mouseenter', function() {
+      var tooltip = el.nextElementSibling;
+      if (tooltip) {
+        tooltip.style.display = 'block';
+        tooltip.style.left = '';
+        tooltip.style.right = '';
+        tooltip.style.top = '';
+        tooltip.style.bottom = '';
+        setTimeout(function() {
+          var rect = tooltip.getBoundingClientRect();
+          var parentRect = el.parentElement.getBoundingClientRect();
+          var winHeight = window.innerHeight || document.documentElement.clientHeight;
+          var winWidth = window.innerWidth || document.documentElement.clientWidth;
+          var tableContainer = el.closest('.table-responsive');
+          var containerRect = tableContainer.getBoundingClientRect();
+          var row = el.closest('tr');
+          var table = row.closest('table');
+          var rows = Array.from(table.querySelectorAll('tbody tr'));
+          var visibleRows = rows.filter(function(r) {
+            var rowRect = r.getBoundingClientRect();
+            return rowRect.top < containerRect.bottom && rowRect.bottom > containerRect.top;
+          });
+          var rowIndex = visibleRows.indexOf(row);
+          var isLastThreeRows = rowIndex >= visibleRows.length - 3;
+          if (rect.right > winWidth) {
+            tooltip.style.left = 'auto';
+            tooltip.style.right = '100%';
+          } else {
+            tooltip.style.left = '100%';
+            tooltip.style.right = 'auto';
+          }
+          if (isLastThreeRows) {
+            tooltip.style.top = 'auto';
+            tooltip.style.bottom = '100%';
+            var tooltipRect = tooltip.getBoundingClientRect();
+            if (tooltipRect.top < containerRect.top) {
+              tooltip.style.bottom = 'auto';
+              tooltip.style.top = '-50%';
+            }
+          } else {
+            tooltip.style.top = '0';
+            tooltip.style.bottom = 'auto';
+            var tooltipRect = tooltip.getBoundingClientRect();
+            if (tooltipRect.bottom > containerRect.bottom) {
+              tooltip.style.top = 'auto';
+              tooltip.style.bottom = '0';
+            }
+          }
+          var updatedRect = tooltip.getBoundingClientRect();
+          if (updatedRect.bottom > containerRect.bottom) {
+            var adjustment = updatedRect.bottom - containerRect.bottom + 10;
+            tooltip.style.top = (tooltip.offsetTop - adjustment) + 'px';
+          }
+          if (updatedRect.top < containerRect.top) {
+            tooltip.style.top = (containerRect.top - parentRect.top + 5) + 'px';
+          }
+        }, 0);
+      }
+    });
+    el.addEventListener('mouseleave', function() {
+      var tooltip = el.nextElementSibling;
+      if (tooltip) { tooltip.style.display = 'none'; }
+    });
+    el.parentElement.addEventListener('mouseleave', function() {
+      var tooltip = el.nextElementSibling;
+      if (tooltip) { tooltip.style.display = 'none'; }
+    });
+  });
+});
+</script>
+
+<%# Helper for displaying value in billions with 3 decimals and B suffix %>
+<% def display_billion(val)
+     v = val.to_f / 1_000_000_000
+     v.abs >= 0.001 ? ("#{v.round(3)}B") : number_with_delimiter(val.to_i)
+end %>

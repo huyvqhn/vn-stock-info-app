@@ -35,7 +35,7 @@ class StockTradingDayImporter
 
     anchor_date = Date.parse(trade_info_by_symbol.first[1]["tradingdate"])
     proprietary_date = DateTime.parse(proprietary_vps_data[0]["TradingDate"]).to_date
-    proprietary_by_symbol = anchor_date == proprietary_date ? index_by_symbol(proprietary_vps_data) : []
+    proprietary_by_symbol = anchor_date == proprietary_date ? index_by_symbol(proprietary_vps_data) : {}
     # proprietary_by_symbol = index_by_symbol(proprietary_vps_data)
 
     negotiated_hnx_by_symbol = consolidate_proprietary_data(negotiated_hnx_bvsc_data)
@@ -58,7 +58,8 @@ class StockTradingDayImporter
       begin
         symbol = ticker.symbol
         trade_info = trade_info_by_symbol[symbol] || {}
-        trade_proprietary = proprietary_by_symbol[symbol] || {}
+        trade_proprietary = proprietary_by_symbol.empty? ? {} : proprietary_by_symbol[symbol]
+
         trade_negotiated = all_negotiated_by_symbol[symbol] || {}
 
         # Aggregate negotiated volumes/values from all proprietary endpoints
@@ -73,10 +74,12 @@ class StockTradingDayImporter
         volume_foreign_sell = trade_info["foreignSell"].to_i
         volume_foreign_net = volume_foreign_buy - volume_foreign_sell
 
-        volume_proprietary_buy = trade_proprietary["TMatchBuyVol"].to_i + trade_proprietary["TDealBuyVol"].to_f
-        volume_proprietary_sell = trade_proprietary["TMatchSellVol"].to_i + trade_proprietary["TDealSellVol"].to_f
-        value_proprietary_buy = trade_proprietary["TMatchBuyVal"].to_f + trade_proprietary["TDealBuyVal"].to_f
-        value_proprietary_sell = trade_proprietary["TMatchSellVal"].to_f + trade_proprietary["TDealSellVal"].to_f
+        if trade_proprietary.present?
+          volume_proprietary_buy = trade_proprietary["TMatchBuyVol"].to_i + trade_proprietary["TDealBuyVol"].to_f
+          volume_proprietary_sell = trade_proprietary["TMatchSellVol"].to_i + trade_proprietary["TDealSellVol"].to_f
+          value_proprietary_buy = trade_proprietary["TMatchBuyVal"].to_f + trade_proprietary["TDealBuyVal"].to_f
+          value_proprietary_sell = trade_proprietary["TMatchSellVal"].to_f + trade_proprietary["TDealSellVal"].to_f
+        end
 
         value_foreign_buy = volume_foreign_buy * trade_info["averagePrice"].to_f
         value_foreign_sell = volume_foreign_sell * trade_info["averagePrice"].to_f

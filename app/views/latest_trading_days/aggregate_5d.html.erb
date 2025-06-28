@@ -1,0 +1,50 @@
+<%# View: Aggregated data for the last 5 trading days for all tickers %>
+<% presenter = MarketGroupPresenter %>
+<div class="container">
+  <div class="mb-5">
+    <h4>Aggregated (Last 5 Trading Days)</h4>
+    <div class="table-responsive" style="max-height: 980px; overflow-y: auto;">
+      <table class="table table-striped table-bordered align-middle" style="position: relative;">
+        <thead class="table-dark" style="position: sticky; top: 0; z-index: 2;">
+        <tr>
+          <th>Symbol</th>
+          <th>Group</th>
+          <th>Price Close (Last)</th>
+          <th>Price Change (Sum)</th>
+          <th>Price Change % (Sum)</th>
+          <th>Volume Total (Sum)</th>
+          <th>Value Total (Sum)</th>
+          <th>Foreign Net Value (Sum)</th>
+          <th>Proprietary Net Value (Sum)</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% @aggregated_records.each do |rec| %>
+          <% ticker = rec[:ticker] %>
+          <% agg = rec[:aggregate] %>
+          <tr>
+            <td><%= ticker.symbol %></td>
+            <td><%= ticker.group&.name %></td>
+            <td><%= agg[:last_price_close] %></td>
+            <td><%= agg[:sum_price_change] %></td>
+            <td><%= agg[:sum_price_change_pct] %> %</td>
+            <td><%= number_with_delimiter(agg[:sum_volume_total]) %></td>
+            <td><%= number_with_delimiter(agg[:sum_value_total]) %></td>
+            <td><%= number_with_delimiter(agg[:sum_value_foreign_net]) %></td>
+            <td><%= number_with_delimiter(agg[:sum_value_proprietary_net]) %></td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<%# Assumes @aggregated_records is an array of hashes with keys:
+# :ticker => Ticker object
+# :aggregate => {
+#   :last_price_close, :sum_price_change, :sum_price_change_pct,
+#   :sum_volume_total, :sum_value_total, :sum_value_foreign_net, :sum_value_proprietary_net
+# }
+# This should be prepared in the controller.
+%>
