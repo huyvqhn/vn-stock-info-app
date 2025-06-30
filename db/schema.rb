@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_08_110000) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_29_101000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -101,6 +101,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_08_110000) do
     t.bigint "market_depth_ask_volume_3"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "indicator_pivot_foreign", default: false
+    t.boolean "indicator_pivot_proprietary", default: false
+    t.boolean "indicator_volume_spike", default: false
+    t.boolean "indicator_candle_reversal", default: false
     t.index ["ticker_id", "price_close"], name: "index_stock_trading_days_on_ticker_id_and_price_close"
     t.index ["ticker_id", "trading_date"], name: "idx_trading_days_ticker_date", unique: true
     t.index ["ticker_id", "volume_total"], name: "index_stock_trading_days_on_ticker_id_and_volume_total"

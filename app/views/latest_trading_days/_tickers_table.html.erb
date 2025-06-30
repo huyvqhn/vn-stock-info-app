@@ -135,7 +135,12 @@
               (<%= percent_foreign_net %> %)
             </div>
           </td>
-          <td style="background-color: <%= color %>"><%= number_with_delimiter(volume_foreign_net) %></td>
+          <td style="background-color: <%= color %>; position: relative; z-index: 1;">
+            <span class="val-foreign-net-tooltip-trigger" style="cursor: pointer;">
+              <%= number_with_delimiter(volume_foreign_net) %>
+            </span>
+            <%= render partial: 'latest_trading_days/val_foreign_net_tooltip', locals: { ticker: ticker } %>
+          </td>
           <td style="background-color: <%= color %>;">
             <span style="color: #198754; font-weight: bold;"><%= display_billion(value_foreign_buy) %></span>
             <div style="font-size: 0.95em; color: #dc3545;">
@@ -181,6 +186,11 @@
       rows.sort(function(a, b) {
           function extractValue(element, type) {
               var cell = element.cells[colIndex];
+              // Check for data-sort-value on main span (for Val Foreign Net)
+              // var sortSpan = cell.querySelector('[data-sort-value]');
+              // if (sortSpan && !isNaN(parseFloat(sortSpan.dataset.sortValue))) {
+              //     return parseFloat(sortSpan.dataset.sortValue);
+              // }
               var text = cell.innerText.replace(/,/g, '');
               if (colIndex === 1) { // Group column: always string sort
                   return text.trim();
@@ -270,6 +280,26 @@
           }
         });
       });
+    });
+
+    document.querySelectorAll('.val-foreign-net-tooltip-trigger').forEach(function(trigger) {
+      trigger.addEventListener('mouseenter', function() {
+        var tooltip = trigger.parentElement.querySelector('.val-foreign-net-tooltip');
+        if (tooltip) tooltip.style.display = 'block';
+      });
+      trigger.addEventListener('mouseleave', function() {
+        var tooltip = trigger.parentElement.querySelector('.val-foreign-net-tooltip');
+        if (tooltip) tooltip.style.display = 'none';
+      });
+      var tooltip = trigger.parentElement.querySelector('.val-foreign-net-tooltip');
+      if (tooltip) {
+        tooltip.addEventListener('mouseleave', function() {
+          tooltip.style.display = 'none';
+        });
+        tooltip.addEventListener('mouseenter', function() {
+          tooltip.style.display = 'block';
+        });
+      }
     });
   });
 </script>

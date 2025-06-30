@@ -1,0 +1,41 @@
+<%# Aggregated 15-day view, styled and formatted like 5d.html.erb %>
+<% presenter = MarketGroupPresenter %>
+<div class="container">
+  <div class="mb-5">
+    <div class="table-responsive" style="max-height: 1020px; overflow-y: auto;">
+      <%= render partial: 'latest_trading_days/tickers_table', locals: {
+        records: @aggregated_records,
+        presenter: MarketGroupPresenter,
+        table_id: '15d-tickers',
+        table_title: 'Aggregated (Last 15 Trading Days)',
+        is_aggregate_5d: false
+      } %>
+    </div>
+  </div>
+</div>
+
+<style>
+  .container {
+    max-width: 98% !important;
+  }
+  .table th, .table td {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.95em;
+  }
+  /* Copy column widths and styles from 5d.html.erb as needed */
+  .table th, .table td { min-width: 80px; }
+  /* ...existing column-specific styles from 5d.html.erb... */
+</style>
+
+<script>
+// Copy tooltip and other JS from 5d.html.erb if needed
+</script>
+
+<%# Helper for displaying value in billions with 3 decimals and B suffix %>
+<% def display_billion(val)
+     v = val.to_f / 1_000_000_000
+     v.abs >= 0.001 ? ("#{v.round(3)}B") : number_with_delimiter(val.to_i)
+end %>

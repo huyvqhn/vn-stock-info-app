@@ -21,6 +21,7 @@ Rails.application.routes.draw do
   get "latest_trading_days", to: "latest_trading_days#index"
   get "latest_trading_days/all", to: "latest_trading_days#all", as: :all_latest_trading_days
   get "latest_trading_days/5d", to: "latest_trading_days#aggregate_5d", as: :five_day_aggregate_latest_trading_days
+  get "latest_trading_days/15d", to: "latest_trading_days#aggregate_15d", as: :fifteen_day_aggregate_latest_trading_days
 
   namespace :api do
     get "stock_prices/import_all", to: "stock_prices#import_all"

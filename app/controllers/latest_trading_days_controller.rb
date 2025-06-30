@@ -7,7 +7,12 @@ class LatestTradingDaysController < ApplicationController
     # First get the most recent trading date
     most_recent_date = StockTradingDay.maximum(:trading_date)
 
-    # Then get all records for that date
+    # Eager load last 30 trading days for each ticker
+    ticker_ids = StockTradingDay.where(trading_date: most_recent_date).pluck(:ticker_id)
+    trading_days_by_ticker = StockTradingDay.where(ticker_id: ticker_ids)
+      .order(trading_date: :desc)
+      .group_by(&:ticker_id)
+
     @all_records = StockTradingDay.where(trading_date: most_recent_date)
                                    .includes(ticker: :group)
                                    .order("tickers.symbol")
@@ -19,6 +24,9 @@ class LatestTradingDaysController < ApplicationController
         trading_day.ticker.define_singleton_method("market_depth_ask_price_#{i}") { trading_day.send("market_depth_ask_price_#{i}") }
         trading_day.ticker.define_singleton_method("market_depth_ask_volume_#{i}") { trading_day.send("market_depth_ask_volume_#{i}") }
       end
+      # Attach last 30 trading days to ticker for tooltip
+      recent_days = trading_days_by_ticker[trading_day.ticker.id]&.first(30) || []
+      trading_day.ticker.define_singleton_method(:recent_trading_days) { recent_days }
       {
         ticker: trading_day.ticker,
         aggregate: {
@@ -42,14 +50,6 @@ class LatestTradingDaysController < ApplicationController
           sum_share_listed: trading_day.share_listed,
           share_foreign_max_allowed: trading_day.share_foreign_max_allowed,
           share_foreign_add_allowed: trading_day.share_foreign_add_allowed,
-          # foreign_own_sub_percent: (
-          #   if trading_day.share_foreign_max_allowed && trading_day.share_foreign_add_allowed && trading_day.share_listed.to_i > 0
-          #     (((trading_day.share_foreign_max_allowed.to_f - trading_day.share_foreign_add_allowed.to_f) / trading_day.share_listed.to_f) * 100).round(2)
-          #   else
-          #     nil
-          #   end
-          # )
-
           foreign_own_sub_percent: (
             if trading_day&.share_foreign_max_allowed && trading_day&.share_foreign_add_allowed && trading_day&.share_listed.to_i > 0
               (((trading_day.share_foreign_max_allowed.to_f - trading_day.share_foreign_add_allowed.to_f) / trading_day.share_listed.to_f) * 100).round(2)
@@ -63,14 +63,30 @@ class LatestTradingDaysController < ApplicationController
   end
 
   def aggregate_5d
-    # Get the last 5 trading dates (descending)
-    last_5_dates = StockTradingDay.order(trading_date: :desc).distinct.pluck(:trading_date).uniq.first(5)
+    aggregate_ndays(5, :"5d")
+  end
 
-    # For each ticker, aggregate over the last 5 days
+  def aggregate_15d
+    aggregate_ndays(15, :"15d")
+  end
+
+  private
+
+  def aggregate_ndays(days_count, render_view)
+    last_n_dates = StockTradingDay.order(trading_date: :desc).distinct.pluck(:trading_date).uniq.first(days_count)
+    # Eager load last 30 trading days for each ticker
+    ticker_ids = Ticker.pluck(:id)
+    trading_days_by_ticker = StockTradingDay.where(ticker_id: ticker_ids)
+      .order(trading_date: :desc)
+      .group_by(&:ticker_id)
+
     @aggregated_records = Ticker.includes(:group).map do |ticker|
-      days = ticker.stock_trading_days.where(trading_date: last_5_dates)
+      days = ticker.stock_trading_days.where(trading_date: last_n_dates)
       next if days.empty?
       last_day = days.order(trading_date: :desc).first
+      # Attach last 30 trading days to ticker for tooltip
+      recent_days = trading_days_by_ticker[ticker.id]&.first(30) || []
+      ticker.define_singleton_method(:recent_trading_days) { recent_days }
       {
         ticker: ticker,
         aggregate: {
@@ -104,6 +120,6 @@ class LatestTradingDaysController < ApplicationController
         }
       }
     end.compact.sort_by { |rec| rec[:ticker].symbol }
-    render :"5d"
+    render render_view
   end
 end
