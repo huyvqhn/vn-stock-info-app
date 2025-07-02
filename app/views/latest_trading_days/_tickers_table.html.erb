@@ -2,304 +2,359 @@
 <%# Required locals: records, presenter, table_id, table_title, is_aggregate_5d: true/false %>
 <div class="mb-5">
   <h4><%= table_title %></h4>
-  <table class="table table-striped table-bordered align-middle table-responsive" style="max-height: <%= is_aggregate_5d ? '1020px' : '1000px' %>; overflow-y: auto; position: relative; width: 100%;">
-    <thead class="table-dark" style="position: sticky; top: 0; z-index: 2;">
-    <tr>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 0)">Symbol</div></th>
-      <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 1)">Group</div>
-        <select id="group-filter-<%= table_id %>" class="form-select form-select-sm mt-1" style="width: 120px; font-size: 0.95em;">
-          <option value="">All</option>
-          <% Array(records).map { |rec| rec[:ticker].group&.name }.uniq.compact.sort.each do |group_name| %>
-            <option value="<%= group_name %>"><%= group_name %></option>
-          <% end %>
-        </select>
-      </th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 2)">Price Close</div></th>
-      <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 3)">Price Change</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 3, 'percent')" style="font-size: 0.9em; color: #6c757d;">%</div>
-      </th>
-      <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 4, 'value')">Volume Total</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 4, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Listed</div>
-      </th>
-      <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 5, 'value')">Volume Negotiated</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 5, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
-      </th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 6)">Val Total</div></th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 7)">Val Negotiated</div></th>
-      <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 8, 'billion')">Val Foreign Net</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 8, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
-      </th>
-      <th><div onclick="sortTable(this, '<%= table_id %>', 9)">Volume Foreign Net</div></th>
-      <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 10, 'billion')">Val Foreign Buy</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 10, 'abs_billion')" style="font-size: 0.9em; color: #6c757d;">Val Foreign Sell</div>
-      </th>
-      <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 11)">Foreign to Capacity %</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 11, 'percent')" style="font-size: 0.9em; color: #6c757d;">Foreign Own %</div>
-      </th>
-      <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 12)">Val Proprietary Buy</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 12)" style="font-size: 0.9em; color: #6c757d;">Val Proprietary Sell</div>
-      </th>
-      <th>
-        <div onclick="sortTable(this, '<%= table_id %>', 13, 'value')">Val Proprietary Net</div>
-        <div onclick="sortTable(this, '<%= table_id %>', 13, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
-      </th>
-    </tr>
-    </thead>
-    <tbody id="<%= table_id %>">
-    <% if Array(records).present? %>
-      <% Array(records).each do |rec| %>
-        <% ticker = rec[:ticker] %>
-        <% agg = rec[:aggregate] %>
-        <% color = presenter.row_color(agg[:sum_price_change_pct]) %>
-        <% vol_total = agg[:sum_volume_total].to_i %>
-        <% vol_neg = agg[:sum_volume_negotiated] ? agg[:sum_volume_negotiated].to_i : 0 %>
-        <% vol_neg_percent = vol_total > 0 ? ((vol_neg.to_f / vol_total) * 100).round(2) : 0 %>
-        <% share_listed = agg[:last_share_listed] ? agg[:last_share_listed].to_i : 0 %>
-        <% percent_foreign_net = vol_total > 0 ? ((agg[:sum_volume_foreign_net].to_f / vol_total * 100).round(2)) : 0 %>
-        <% value_prop_buy = agg[:sum_value_proprietary_buy] ? agg[:sum_value_proprietary_buy].to_i : 0 %>
-        <% value_prop_sell = agg[:sum_value_proprietary_sell] ? agg[:sum_value_proprietary_sell].to_i : 0 %>
-        <% value_prop_net = value_prop_buy - value_prop_sell %>
-        <% sum_value_total = agg[:sum_value_total] ? agg[:sum_value_total].to_i : 0 %>
-        <% sum_share_listed = agg[:sum_share_listed] ? agg[:sum_share_listed].to_i : 0 %>
-        <% percent_prop_net = sum_value_total > 0 ? ((value_prop_net.to_f / sum_value_total) * 100).round(2) : 0 %>
-        <% value_negotiated = agg[:sum_value_negotiated] ? agg[:sum_value_negotiated].to_i : 0 %>
-        <% value_foreign_net = agg[:sum_value_foreign_net] ? agg[:sum_value_foreign_net].to_i : 0 %>
-        <% volume_foreign_net = agg[:sum_volume_foreign_net] ? agg[:sum_volume_foreign_net].to_i : 0 %>
-        <% value_foreign_buy = agg[:sum_value_foreign_buy] ? agg[:sum_value_foreign_buy].to_i : (agg[:sum_value_foreign_buy] == 0 ? 0 : (agg[:sum_volume_foreign_buy] ? agg[:sum_volume_foreign_buy].to_i : 0)) %>
-        <% value_foreign_sell = agg[:sum_value_foreign_sell] ? agg[:sum_value_foreign_sell].to_i : (agg[:sum_value_foreign_sell] == 0 ? 0 : (agg[:sum_volume_foreign_sell] ? agg[:sum_volume_foreign_sell].to_i : 0)) %>
-        <% share_foreign_own_rate = agg[:last_share_foreign_own_rate] ? agg[:last_share_foreign_own_rate].to_f.round(2) : '' %>
-        <% percent_of_listed = (share_listed > 0 && sum_share_listed > 0) ? ((vol_total.to_f / sum_share_listed) * 100).round(2) : 0 %>
+  <div class="table-scroll-x" style="overflow-x: auto; width: 100%; position: relative;">
+    <div class="table-scroll-x-top" style="overflow-x: auto; width: 100%; height: 16px; position: sticky; top: 0; z-index: 3;"></div>
+    <div style="max-height: 900px; overflow-y: auto; width: 100%;">
+      <table class="table table-striped table-bordered align-middle table-responsive" style="position: relative; width: 100%; min-width: 1200px;">
+        <thead class="table-dark" style="position: sticky; top: 0; z-index: 2; background: #222;">
         <tr>
-          <td style="background-color: <%= color %>; position: relative; cursor: pointer;">
-            <span class="symbol-tooltip-trigger"><%= ticker.symbol %></span>
-            <div class="symbol-tooltip-table" style="display:none; position:absolute; left:100%; top:100%; z-index:10; background:#fff; border:1px solid #ccc; box-shadow:0 2px 8px rgba(0,0,0,0.15); padding:8px; min-width:180px;">
-              <table class="table table-bordered table-sm mb-0" style="font-size:0.95em;">
-                <thead>
-                  <tr><th>Level</th><th colspan="2" class="text-center">Bid</th><th colspan="2" class="text-center">Ask</th></tr>
-                  <tr>
-                    <th></th><th>Price</th><th>Vol</th>
-                    <th>Price</th><th>Vol</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% 1.upto(3) do |i| %>
-                    <tr>
-                      <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= i %></td>
-                      <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= ticker.try("market_depth_bid_price_#{i}").present? ? (ticker.try("market_depth_bid_price_#{i}").to_f / 1000.0).round(1) : '-' %></td>
-                      <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= ticker.try("market_depth_bid_volume_#{i}").present? ? number_with_delimiter(ticker.try("market_depth_bid_volume_#{i}")) : '-' %></td>
-                      <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= ticker.try("market_depth_ask_price_#{i}").present? ? (ticker.try("market_depth_ask_price_#{i}").to_f / 1000.0).round(1) : '-' %></td>
-                      <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= ticker.try("market_depth_ask_volume_#{i}").present? ? number_with_delimiter(ticker.try("market_depth_ask_volume_#{i}")) : '-' %></td>
-                    </tr>
-                  <% end %>
-                </tbody>
-              </table>
-            </div>
-          </td>
-          <td style="background-color: <%= color %>"><%= ticker.group&.name %></td>
-          <td style="background-color: <%= color %>"><%= agg[:last_price_close].present? ? (agg[:last_price_close].to_f / 1000.0).round(1) : '' %></td>
-          <td style="background-color: <%= color %>">
-            <%= number_with_delimiter(agg[:sum_price_change].to_i) %>
-            <div style="font-size: 0.95em; color: #6c757d;">
-              (<%= number_with_delimiter(agg[:sum_price_change_pct]) %>% )
-            </div>
-          </td>
-          <td style="background-color: <%= color %>; <%= percent_of_listed > 2 ? 'font-weight:bold;' : '' %>">
-            <% if share_listed > 0 %>
-              <%= number_with_delimiter(vol_total) %>
-              <div style="font-weight: <%= percent_of_listed > 2 ? 'bold' : 'normal' %>;color: <%= percent_of_listed > 2 ? '#d9534f' : '#6c757d' %>; font-size: 0.95em;">
-                (<%= percent_of_listed %>% )
-              </div>
-            <% end %>
-          </td>
-          <td style="background-color: <%= color %>; font-weight: <%= vol_neg_percent > 20 ? 'bold' : 'normal' %>">
-            <%= number_with_delimiter(vol_neg) %>
-            <div style="font-weight: <%= vol_neg_percent > 20 ? 'bold' : 'normal' %>; color: <%= vol_neg_percent > 20 ? '#d9534f' : '#6c757d' %>; font-size: 0.95em;">
-              (<%= vol_neg_percent %> %)
-            </div>
-          </td>
-          <td style="background-color: <%= color %>; <%= percent_of_listed > 2 ? 'font-weight:bold;' : '' %> font-size: 1.05em;">
-            <%= display_billion(sum_value_total) %>
-          </td>
-          <td style="background-color: <%= color %>; font-weight: <%= vol_neg_percent > 20 ? 'bold' : 'normal' %>"><%= display_billion(value_negotiated) %></td>
-          <td style="background-color: <%= color %>; font-weight: <%= percent_foreign_net.abs > 10 ? 'bold' : 'normal' %>">
-            <%= display_billion(value_foreign_net) %>
-            <div style="font-weight: bold; color: <%= percent_foreign_net > 0 ? '#198754' : '#dc3545' %>; font-size: 0.95em;">
-              (<%= percent_foreign_net %> %)
-            </div>
-          </td>
-          <td style="background-color: <%= color %>; position: relative; z-index: 1;">
-            <span class="val-foreign-net-tooltip-trigger" style="cursor: pointer;">
-              <%= number_with_delimiter(volume_foreign_net) %>
-            </span>
-            <%= render partial: 'latest_trading_days/val_foreign_net_tooltip', locals: { ticker: ticker } %>
-          </td>
-          <td style="background-color: <%= color %>;">
-            <span style="color: #198754; font-weight: bold;"><%= display_billion(value_foreign_buy) %></span>
-            <div style="font-size: 0.95em; color: #dc3545;">
-              - <span style="font-weight: bold;"><%= display_billion(value_foreign_sell.abs) %></span>
-            </div>
-          </td>
-          <td style="background-color: <%= color %>; font-weight: <%= share_foreign_own_rate.to_f > 15 ? 'bold' : 'normal' %>">
-            <%= share_foreign_own_rate %> %
-            <% if agg[:foreign_own_sub_percent] %>
-              <div style="font-size:0.95em; color:#198754;">
-                (<%= agg[:foreign_own_sub_percent] %>%)
-              </div>
-            <% end %>
-          </td>
-          <td style="background-color: <%= color %>"><%= display_billion(value_prop_buy) %>
-            <div style="font-size: 0.95em; color: #dc3545;">
-              - <span style="font-weight: bold;"><%= display_billion(value_prop_sell.abs) %></span>
-            </div>          
-          </td>
-          <td style="background-color: <%= color %>; font-weight: <%= percent_prop_net.abs > 10 ? 'bold' : 'normal' %>">
-            <%= "#{(value_prop_net.to_f / 1_000_000_000).round(3)}B" %>
-            <div style="font-weight: <%= percent_prop_net.abs > 10 ? 'bold' : 'normal' %>; color: <%= percent_prop_net > 0 ? '#198754' : (percent_prop_net < 0 ? '#dc3545' : '#6c757d') %>; font-size: 0.95em;">
-              (<%= percent_prop_net %> %)
-            </div>
-          </td>
+          <th><div onclick="sortTable(this, '<%= table_id %>', 0)">Symbol</div></th>
+          <th style="width: 80px; min-width: 60px; max-width: 110px;">
+            <div onclick="sortTable(this, '<%= table_id %>', 1)">Group</div>
+            <select id="group-filter-<%= table_id %>" class="form-select form-select-sm mt-1" style="width: 120px; font-size: 0.95em;">
+              <option value="">All</option>
+              <% Array(records).map { |rec| rec[:ticker].group&.name }.uniq.compact.sort.each do |group_name| %>
+                <option value="<%= group_name %>"><%= group_name %></option>
+              <% end %>
+            </select>
+          </th>
+          <th style="width: 55px; min-width: 40px; max-width: 70px;"><div onclick="sortTable(this, '<%= table_id %>', 2)">Price Close</div></th>
+          <th style="width: 65px; min-width: 45px; max-width: 85px;">
+            <div onclick="sortTable(this, '<%= table_id %>', 3)">Price Change</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 3, 'percent')" style="font-size: 0.9em; color: #6c757d;">%</div>
+          </th>
+          <th style="width: 60px; min-width: 40px; max-width: 75px;">
+            <div onclick="sortTable(this, '<%= table_id %>', 4, 'value')">Volume Total</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 4, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Listed</div>
+          </th>
+          <th style="width: 65px; min-width: 45px; max-width: 85px;">
+            <div onclick="sortTable(this, '<%= table_id %>', 5, 'value')">Volume Negotiated</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 5, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
+          </th>
+          <th style="width: 50px; min-width: 35px; max-width: 65px;">
+            <div onclick="sortTable(this, '<%= table_id %>', 6)">Val Total</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 6, 'value')" style="font-size: 0.95em; color: #6c757d;">Val Negotiated</div>
+          </th>
+          <th style="width: 55px; min-width: 35px; max-width: 70px;">
+            <div onclick="sortTable(this, '<%= table_id %>', 7, 'billion')">Val Fogn Net</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 7, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
+          </th>
+          <th style="width: 60px; min-width: 40px; max-width: 80px;"><div onclick="sortTable(this, '<%= table_id %>', 8)">Volume Foreign Net</div></th>
+          <th style="width: 50px; min-width: 35px; max-width: 65px;">
+            <div onclick="sortTable(this, '<%= table_id %>', 9, 'billion')">Val Fogn Buy</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 9, 'abs_billion')" style="font-size: 0.9em; color: #6c757d;">Val Fogn Sell</div>
+          </th>
+          <th style="width: 65px; min-width: 45px; max-width: 85px;">
+            <div onclick="sortTable(this, '<%= table_id %>', 10)">Fogn to Capacity %</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 10, 'percent')" style="font-size: 0.9em; color: #6c757d;">Fogn Own %</div>
+          </th>
+          <th style="width: 65px; min-width: 45px; max-width: 85px;">
+            <div onclick="sortTable(this, '<%= table_id %>', 11)">Val Prop Buy</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 11)" style="font-size: 0.9em; color: #6c757d;">Val Prop Sell</div>
+          </th>
+          <th style="width: 65px; min-width: 45px; max-width: 85px;">
+            <div onclick="sortTable(this, '<%= table_id %>', 12, 'value')">Val Prop Net</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 12, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
+          </th>
+          <th>
+            <div style="width: 180px; min-width: 140px; max-width: 240px;">Foreign Last 30</div>
+          </th>
+          <th>
+            <div style="width: 180px; min-width: 140px; max-width: 240px;">Proprietary Last 30</div>
+          </th>
         </tr>
-      <% end %>
-    <% else %>
-      <tr><td colspan="18" class="text-center">No data available.</td></tr>
-    <% end %>
-    </tbody>
-  </table>
-</div>
+        </thead>
+        <tbody id="<%= table_id %>">
+        <% if Array(records).present? %>
+          <% Array(records).each do |rec| %>
+            <% ticker = rec[:ticker] %>
+            <% agg = rec[:aggregate] %>
+            <% color = presenter.row_color(agg[:sum_price_change_pct]) %>
+            <% vol_total = agg[:sum_volume_total].to_i %>
+            <% vol_neg = agg[:sum_volume_negotiated] ? agg[:sum_volume_negotiated].to_i : 0 %>
+            <% vol_neg_percent = vol_total > 0 ? ((vol_neg.to_f / vol_total) * 100).round(2) : 0 %>
+            <% share_listed = agg[:last_share_listed] ? agg[:last_share_listed].to_i : 0 %>
+            <% percent_foreign_net = vol_total > 0 ? ((agg[:sum_volume_foreign_net].to_f / vol_total * 100).round(2)) : 0 %>
+            <% value_prop_buy = agg[:sum_value_proprietary_buy] ? agg[:sum_value_proprietary_buy].to_i : 0 %>
+            <% value_prop_sell = agg[:sum_value_proprietary_sell] ? agg[:sum_value_proprietary_sell].to_i : 0 %>
+            <% value_prop_net = value_prop_buy - value_prop_sell %>
+            <% sum_value_total = agg[:sum_value_total] ? agg[:sum_value_total].to_i : 0 %>
+            <% sum_share_listed = agg[:sum_share_listed] ? agg[:sum_share_listed].to_i : 0 %>
+            <% percent_prop_net = sum_value_total > 0 ? ((value_prop_net.to_f / sum_value_total) * 100).round(2) : 0 %>
+            <% value_negotiated = agg[:sum_value_negotiated] ? agg[:sum_value_negotiated].to_i : 0 %>
+            <% value_foreign_net = agg[:sum_value_foreign_net] ? agg[:sum_value_foreign_net].to_i : 0 %>
+            <% volume_foreign_net = agg[:sum_volume_foreign_net] ? agg[:sum_volume_foreign_net].to_i : 0 %>
+            <% value_foreign_buy = agg[:sum_value_foreign_buy] ? agg[:sum_value_foreign_buy].to_i : (agg[:sum_value_foreign_buy] == 0 ? 0 : (agg[:sum_volume_foreign_buy] ? agg[:sum_volume_foreign_buy].to_i : 0)) %>
+            <% value_foreign_sell = agg[:sum_value_foreign_sell] ? agg[:sum_value_foreign_sell].to_i : (agg[:sum_value_foreign_sell] == 0 ? 0 : (agg[:sum_volume_foreign_sell] ? agg[:sum_volume_foreign_sell].to_i : 0)) %>
+            <% share_foreign_own_rate = agg[:last_share_foreign_own_rate] ? agg[:last_share_foreign_own_rate].to_f.round(2) : '' %>
+            <% percent_of_listed = (share_listed > 0 && sum_share_listed > 0) ? ((vol_total.to_f / sum_share_listed) * 100).round(2) : 0 %>
+            <tr>
+              <td style="background-color: <%= color %>; position: relative; cursor: pointer;">
+                <span class="symbol-tooltip-trigger"><%= ticker.symbol %></span>
+                <div class="symbol-tooltip-table" style="display:none; position:absolute; left:100%; top:100%; z-index:10; background:#fff; border:1px solid #ccc; box-shadow:0 2px 8px rgba(0,0,0,0.15); padding:8px; min-width:180px;">
+                  <table class="table table-bordered table-sm mb-0" style="font-size:0.95em;">
+                    <thead>
+                      <tr><th>Level</th><th colspan="2" class="text-center">Bid</th><th colspan="2" class="text-center">Ask</th></tr>
+                      <tr>
+                        <th></th><th>Price</th><th>Vol</th>
+                        <th>Price</th><th>Vol</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% 1.upto(3) do |i| %>
+                        <tr>
+                          <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= i %></td>
+                          <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= ticker.try("market_depth_bid_price_#{i}").present? ? (ticker.try("market_depth_bid_price_#{i}").to_f / 1000.0).round(1) : '-' %></td>
+                          <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= ticker.try("market_depth_bid_volume_#{i}").present? ? number_with_delimiter(ticker.try("market_depth_bid_volume_#{i}")) : '-' %></td>
+                          <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= ticker.try("market_depth_ask_price_#{i}").present? ? (ticker.try("market_depth_ask_price_#{i}").to_f / 1000.0).round(1) : '-' %></td>
+                          <td style="<%= i == 1 ? 'font-weight:bold;' : '' %>"><%= ticker.try("market_depth_ask_volume_#{i}").present? ? number_with_delimiter(ticker.try("market_depth_ask_volume_#{i}")) : '-' %></td>
+                        </tr>
+                      <% end %>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+              <td style="background-color: <%= color %>"><%= ticker.group&.name %></td>
+              <td style="background-color: <%= color %>"><%= agg[:last_price_close].present? ? (agg[:last_price_close].to_f / 1000.0).round(1) : '' %></td>
+              <td style="background-color: <%= color %>">
+                <%= number_with_delimiter(agg[:sum_price_change].to_i) %>
+                <div style="font-size: 0.95em; color: #6c757d;">
+                  (<%= number_with_delimiter(agg[:sum_price_change_pct]) %>% )
+                </div>
+              </td>
+              <td style="background-color: <%= color %>; <%= percent_of_listed > 2 ? 'font-weight:bold;' : '' %>">
+                <% if share_listed > 0 %>
+                  <%= number_with_delimiter(vol_total) %>
+                  <div style="font-weight: <%= percent_of_listed > 2 ? 'bold' : 'normal' %>;color: <%= percent_of_listed > 2 ? '#d9534f' : '#6c757d' %>; font-size: 0.95em;">
+                    (<%= percent_of_listed %>% )
+                  </div>
+                <% end %>
+              </td>
+              <td style="background-color: <%= color %>; font-weight: <%= vol_neg_percent > 20 ? 'bold' : 'normal' %>">
+                <%= number_with_delimiter(vol_neg) %>
+                <div style="font-weight: <%= vol_neg_percent > 20 ? 'bold' : 'normal' %>; color: <%= vol_neg_percent > 20 ? '#d9534f' : '#6c757d' %>; font-size: 0.95em;">
+                  (<%= vol_neg_percent %> %)
+                </div>
+              </td>
+              <td style="background-color: <%= color %>; <%= percent_of_listed > 2 ? 'font-weight:bold;' : '' %> font-size: 1.05em;">
+                <%= display_billion(sum_value_total) %>
+                <div style="font-size: 0.95em; color: #6c757d;">
+                  <%= display_billion(value_negotiated) %>
+                </div>
+              </td>
+              <td style="background-color: <%= color %>; font-weight: <%= percent_foreign_net.abs > 10 ? 'bold' : 'normal' %>">
+                <%= display_billion(value_foreign_net) %>
+                <div style="font-weight: bold; color: <%= percent_foreign_net > 0 ? '#198754' : '#dc3545' %>; font-size: 0.95em;">
+                  (<%= percent_foreign_net %> %)
+                </div>
+              </td>
+              <td style="background-color: <%= color %>; position: relative; z-index: 1;">
+                <span class="val-foreign-net-tooltip-trigger" style="cursor: pointer;">
+                  <%= number_with_delimiter(volume_foreign_net) %>
+                </span>
+                <%= render partial: 'latest_trading_days/val_foreign_net_tooltip', locals: { ticker: ticker } %>
+              </td>
+              <td style="background-color: <%= color %>;">
+                <span style="color: #198754; font-weight: bold;"><%= display_billion(value_foreign_buy) %></span>
+                <div style="font-size: 0.95em; color: #dc3545;">
+                  - <span style="font-weight: bold;"><%= display_billion(value_foreign_sell.abs) %></span>
+                </div>
+              </td>
+              <td style="background-color: <%= color %>; font-weight: <%= share_foreign_own_rate.to_f > 15 ? 'bold' : 'normal' %>">
+                <%= share_foreign_own_rate %> %
+                <% if agg[:foreign_own_sub_percent] %>
+                  <div style="font-size:0.95em; color:#198754;">
+                    (<%= agg[:foreign_own_sub_percent] %>%)
+                  </div>
+                <% end %>
+              </td>
+              <td style="background-color: <%= color %>"><%= display_billion(value_prop_buy) %>
+                <div style="font-size: 0.95em; color: #dc3545;">
+                  - <span style="font-weight: bold;"><%= display_billion(value_prop_sell.abs) %></span>
+                </div>          
+              </td>
+              <td style="background-color: <%= color %>; font-weight: <%= percent_prop_net.abs > 10 ? 'bold' : 'normal' %>">
+                <%= "#{(value_prop_net.to_f / 1_000_000_000).round(3)}B" %>
+                <div style="font-weight: <%= percent_prop_net.abs > 10 ? 'bold' : 'normal' %>; color: <%= percent_prop_net > 0 ? '#198754' : (percent_prop_net < 0 ? '#dc3545' : '#6c757d') %>; font-size: 0.95em;">
+                  (<%= percent_prop_net %> %)
+                </div>
+              </td>
+              <td style="background-color: <%= color %>; min-width: 140px; max-width: 240px;">
+                <div class="foreign-last-30-histogram">
+                  <%= render partial: 'latest_trading_days/val_foreign_net_tooltip', locals: { ticker: ticker, histogram_only: true } %>
+                </div>
+              </td>
+              <td style="background-color: <%= color %>; min-width: 140px; max-width: 240px;">
+                <div class="proprietary-last-30-histogram">
+                  <%= render partial: 'latest_trading_days/proprietary_net_histogram', locals: { ticker: ticker } %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        <% else %>
+          <tr><td colspan="18" class="text-center">No data available.</td></tr>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-<script>
-  // ...existing code...
-  function sortTable(header, tableId, colIndex, sortType = 'value') {
-      var table = header.closest('table');
-      var tbody = table.tBodies[0];
-      var rows = Array.from(tbody.rows);
-      var asc = header.asc = !header.asc;
+  <script>
+    // ...existing code...
+    function sortTable(header, tableId, colIndex, sortType = 'value') {
+        var table = header.closest('table');
+        var tbody = table.tBodies[0];
+        var rows = Array.from(tbody.rows);
+        var asc = header.asc = !header.asc;
 
-      rows.sort(function(a, b) {
-          function extractValue(element, type) {
-              var cell = element.cells[colIndex];
-              // Check for data-sort-value on main span (for Val Foreign Net)
-              // var sortSpan = cell.querySelector('[data-sort-value]');
-              // if (sortSpan && !isNaN(parseFloat(sortSpan.dataset.sortValue))) {
-              //     return parseFloat(sortSpan.dataset.sortValue);
-              // }
-              var text = cell.innerText.replace(/,/g, '');
-              if (colIndex === 1) { // Group column: always string sort
-                  return text.trim();
-              }
-              if (type === 'percent') {
-                  var percentDiv = cell.querySelector('div');
-                  if (percentDiv) {
-                      var percentMatch = percentDiv.innerText.match(/\(([-\d.]+)/);
-                      return percentMatch ? parseFloat(percentMatch[1]) : 0;
-                  }
-                  var percentInText = text.match(/\(([-\d.]+)/);
-                  return percentInText ? parseFloat(percentInText[1]) : 0;
-              } else if (type === 'abs_billion') {
-                  var sellDiv = cell.querySelector('div:last-child');
-                  var valueText = sellDiv ? sellDiv.innerText : text;
-                  var hasB = valueText.includes('B');
-                  var numberMatch = valueText.match(/-?[\d.]+/);
-                  if (!numberMatch) return 0;
-                  var value = parseFloat(numberMatch[0]);
-                  value = Math.abs(value);
-                  return hasB ? value * 1e9 : value;
-              } else if (type === 'billion') {
-                  var buyDiv = cell.querySelector('div:first-child');
-                  var valueText = buyDiv ? buyDiv.innerText : text;
-                  var hasB = valueText.includes('B');
-                  var numberMatch = valueText.match(/-?[\d.]+/);
-                  if (!numberMatch) return 0;
-                  var value = parseFloat(numberMatch[0]);
-                  return hasB ? value * 1e9 : value;
-              } else if (type === 'value') {
-                  var mainDiv = cell.querySelector('div') ? cell.childNodes[0] : null;
-                  var valueText = mainDiv ? mainDiv.textContent : text.split('(')[0].trim();
-                  var hasB = valueText.includes('B');
-                  var numberMatch = valueText.match(/-?[\d.]+/);
-                  if (!numberMatch) return 0;
-                  var value = parseFloat(numberMatch[0]);
-                  return hasB ? value * 1e9 : value;
-              } else {
-                  var valueText = text.split('(')[0].trim();
-                  var hasB = valueText.includes('B');
-                  var numberMatch = valueText.match(/-?[\d.]+/);
-                  if (!numberMatch) return 0;
-                  var value = parseFloat(numberMatch[0]);
-                  return hasB ? value * 1e9 : value;
-              }
-          }
-          var aVal = extractValue(a, sortType);
-          var bVal = extractValue(b, sortType);
-          if (colIndex === 1) {
-              return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-          }
-          if (!isNaN(aVal) && !isNaN(bVal)) {
-              if (sortType === 'abs_billion') {
-                  return asc ? aVal - bVal : bVal - aVal;
-              }
-              return asc ? aVal - bVal : bVal - aVal;
-          } else {
-              var aText = a.cells[colIndex].innerText;
-              var bText = b.cells[colIndex].innerText;
-              return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
-          }
-      });
-      rows.forEach(function(row) { tbody.appendChild(row); });
-      var headerDiv = sortType === 'percent' ? header.querySelector('div:last-child') : header;
-      if (headerDiv) {
-          table.querySelectorAll('th div').forEach(div => {
-              div.classList.remove('sorted', 'asc');
+        rows.sort(function(a, b) {
+            function extractValue(element, type) {
+                var cell = element.cells[colIndex];
+                // Check for data-sort-value on main span (for Val Foreign Net)
+                // var sortSpan = cell.querySelector('[data-sort-value]');
+                // if (sortSpan && !isNaN(parseFloat(sortSpan.dataset.sortValue))) {
+                //     return parseFloat(sortSpan.dataset.sortValue);
+                // }
+                var text = cell.innerText.replace(/,/g, '');
+                if (colIndex === 1) { // Group column: always string sort
+                    return text.trim();
+                }
+                if (type === 'percent') {
+                    var percentDiv = cell.querySelector('div');
+                    if (percentDiv) {
+                        var percentMatch = percentDiv.innerText.match(/\(([-\d.]+)/);
+                        return percentMatch ? parseFloat(percentMatch[1]) : 0;
+                    }
+                    var percentInText = text.match(/\(([-\d.]+)/);
+                    return percentInText ? parseFloat(percentInText[1]) : 0;
+                } else if (type === 'abs_billion') {
+                    var sellDiv = cell.querySelector('div:last-child');
+                    var valueText = sellDiv ? sellDiv.innerText : text;
+                    var hasB = valueText.includes('B');
+                    var numberMatch = valueText.match(/-?[\d.]+/);
+                    if (!numberMatch) return 0;
+                    var value = parseFloat(numberMatch[0]);
+                    value = Math.abs(value);
+                    return hasB ? value * 1e9 : value;
+                } else if (type === 'billion') {
+                    var buyDiv = cell.querySelector('div:first-child');
+                    var valueText = buyDiv ? buyDiv.innerText : text;
+                    var hasB = valueText.includes('B');
+                    var numberMatch = valueText.match(/-?[\d.]+/);
+                    if (!numberMatch) return 0;
+                    var value = parseFloat(numberMatch[0]);
+                    return hasB ? value * 1e9 : value;
+                } else if (type === 'value') {
+                    var mainDiv = cell.querySelector('div') ? cell.childNodes[0] : null;
+                    var valueText = mainDiv ? mainDiv.textContent : text.split('(')[0].trim();
+                    var hasB = valueText.includes('B');
+                    var numberMatch = valueText.match(/-?[\d.]+/);
+                    if (!numberMatch) return 0;
+                    var value = parseFloat(numberMatch[0]);
+                    return hasB ? value * 1e9 : value;
+                } else {
+                    var valueText = text.split('(')[0].trim();
+                    var hasB = valueText.includes('B');
+                    var numberMatch = valueText.match(/-?[\d.]+/);
+                    if (!numberMatch) return 0;
+                    var value = parseFloat(numberMatch[0]);
+                    return hasB ? value * 1e9 : value;
+                }
+            }
+            var aVal = extractValue(a, sortType);
+            var bVal = extractValue(b, sortType);
+            if (colIndex === 1) {
+                return asc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+            }
+            if (!isNaN(aVal) && !isNaN(bVal)) {
+                if (sortType === 'abs_billion') {
+                    return asc ? aVal - bVal : bVal - aVal;
+                }
+                return asc ? aVal - bVal : bVal - aVal;
+            } else {
+                var aText = a.cells[colIndex].innerText;
+                var bText = b.cells[colIndex].innerText;
+                return asc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+            }
+        });
+        rows.forEach(function(row) { tbody.appendChild(row); });
+        var headerDiv = sortType === 'percent' ? header.querySelector('div:last-child') : header;
+        if (headerDiv) {
+            table.querySelectorAll('th div').forEach(div => {
+                div.classList.remove('sorted', 'asc');
+            });
+            headerDiv.classList.add('sorted');
+            headerDiv.classList.toggle('asc', asc);
+        }
+    }
+
+    // Sync horizontal scroll between top and bottom scrollbars
+    document.addEventListener('DOMContentLoaded', function() {
+      var tableScrollX = document.querySelector('.table-scroll-x');
+      if (tableScrollX) {
+        var table = tableScrollX.querySelector('table');
+        var topScroll = tableScrollX.querySelector('.table-scroll-x-top');
+        if (table && topScroll) {
+          // Set width of top scroll to match table
+          topScroll.scrollLeft = 0;
+          topScroll.style.overflowX = 'auto';
+          topScroll.style.width = '100%';
+          topScroll.style.height = '16px';
+          topScroll.style.position = 'sticky';
+          topScroll.style.top = '0';
+          topScroll.style.zIndex = '3';
+          // Create a dummy div to match table width
+          var dummy = document.createElement('div');
+          dummy.style.width = table.scrollWidth + 'px';
+          dummy.style.height = '1px';
+          topScroll.appendChild(dummy);
+          // Sync scroll
+          topScroll.addEventListener('scroll', function() {
+            tableScrollX.scrollLeft = topScroll.scrollLeft;
           });
-          headerDiv.classList.add('sorted');
-          headerDiv.classList.toggle('asc', asc);
-      }
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('[id^="group-filter-"]').forEach(function(select) {
-      select.addEventListener('change', function() {
-        var tableId = select.id.replace('group-filter-', '');
-        var table = document.getElementById(tableId).closest('table');
-        var groupIdx = 1; // Group column index
-        var value = select.value;
-        Array.from(table.tBodies[0].rows).forEach(function(row) {
-          var cell = row.cells[groupIdx];
-          if (!value || (cell && cell.innerText.trim() === value)) {
-            row.style.display = '';
-          } else {
-            row.style.display = 'none';
-          }
-        });
-      });
-    });
-
-    document.querySelectorAll('.val-foreign-net-tooltip-trigger').forEach(function(trigger) {
-      trigger.addEventListener('mouseenter', function() {
-        var tooltip = trigger.parentElement.querySelector('.val-foreign-net-tooltip');
-        if (tooltip) tooltip.style.display = 'block';
-      });
-      trigger.addEventListener('mouseleave', function() {
-        var tooltip = trigger.parentElement.querySelector('.val-foreign-net-tooltip');
-        if (tooltip) tooltip.style.display = 'none';
-      });
-      var tooltip = trigger.parentElement.querySelector('.val-foreign-net-tooltip');
-      if (tooltip) {
-        tooltip.addEventListener('mouseleave', function() {
-          tooltip.style.display = 'none';
-        });
-        tooltip.addEventListener('mouseenter', function() {
-          tooltip.style.display = 'block';
-        });
+          tableScrollX.addEventListener('scroll', function() {
+            topScroll.scrollLeft = tableScrollX.scrollLeft;
+          });
+        }
       }
     });
-  });
-</script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('[id^="group-filter-"]').forEach(function(select) {
+        select.addEventListener('change', function() {
+          var tableId = select.id.replace('group-filter-', '');
+          var table = document.getElementById(tableId).closest('table');
+          var groupIdx = 1; // Group column index
+          var value = select.value;
+          Array.from(table.tBodies[0].rows).forEach(function(row) {
+            var cell = row.cells[groupIdx];
+            if (!value || (cell && cell.innerText.trim() === value)) {
+              row.style.display = '';
+            } else {
+              row.style.display = 'none';
+            }
+          });
+        });
+      });
+
+      document.querySelectorAll('.val-foreign-net-tooltip-trigger').forEach(function(trigger) {
+        trigger.addEventListener('mouseenter', function() {
+          var tooltip = trigger.parentElement.querySelector('.val-foreign-net-tooltip');
+          if (tooltip) tooltip.style.display = 'block';
+        });
+        trigger.addEventListener('mouseleave', function() {
+          var tooltip = trigger.parentElement.querySelector('.val-foreign-net-tooltip');
+          if (tooltip) tooltip.style.display = 'none';
+        });
+        var tooltip = trigger.parentElement.querySelector('.val-foreign-net-tooltip');
+        if (tooltip) {
+          tooltip.addEventListener('mouseleave', function() {
+            tooltip.style.display = 'none';
+          });
+          tooltip.addEventListener('mouseenter', function() {
+            tooltip.style.display = 'block';
+          });
+        }
+      });
+    });
+  </script>
