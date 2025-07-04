@@ -1,0 +1,20 @@
+<%# _val_foreign_net_histogram.html.erb - Histogram for last N Val Foreign Net values for a ticker %>
+<%# Required locals: ticker: Ticker instance, histogram_only: optional, sessions: optional (default: 30) %>
+<% sessions = defined?(sessions) && sessions.to_i > 0 ? sessions.to_i : 30 %>
+<% values = ticker.respond_to?(:recent_trading_days) && ticker.recent_trading_days.present? ? ticker.recent_trading_days.last(sessions).reverse.map(&:value_foreign_net) : [] %>
+<% max_val = values.map(&:abs).max.to_f %>
+<% if defined?(histogram_only) && histogram_only %>
+  <div class="val-foreign-net-histogram" style="display:flex; align-items:flex-end; height:80px; gap:2px; width:100%; min-width:120px; max-width:220px;">
+    <% if values.present? %>
+      <% ticker.recent_trading_days.last(sessions).reverse.each do |day| %>
+        <% val = day.value_foreign_net.to_f %>
+        <% bar_height = max_val > 0 ? (val.abs / max_val * 70).round : 1 %>
+        <% bar_color = val > 0 ? '#4caf50' : (val < 0 ? '#f44336' : '#bbb') %>
+        <div title="<%= day.trading_date.strftime('%d-%m') %> <%= number_with_delimiter((val/1000000000.0).round(2)) %>B"
+             style="width:6px; height:<%= bar_height %>px; background:<%= bar_color %>; border-radius:2px 2px 0 0; display:inline-block; font-weight:bold;"></div>
+      <% end %>
+    <% else %>
+      <div style="padding:8px 0; text-align:center; color:#888; width:100%;">No data</div>
+    <% end %>
+  </div>
+<% end %>

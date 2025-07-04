@@ -24,9 +24,15 @@ class LatestTradingDaysController < ApplicationController
         trading_day.ticker.define_singleton_method("market_depth_ask_price_#{i}") { trading_day.send("market_depth_ask_price_#{i}") }
         trading_day.ticker.define_singleton_method("market_depth_ask_volume_#{i}") { trading_day.send("market_depth_ask_volume_#{i}") }
       end
-      # Attach last 30 trading days to ticker for tooltip
+      # Attach last 30 trading days to ticker for tooltip (foreign)
       recent_days = trading_days_by_ticker[trading_day.ticker.id]&.first(30) || []
       trading_day.ticker.define_singleton_method(:recent_trading_days) { recent_days }
+      # Attach last 30 proprietary net values for Proprietary Last 30 column
+      proprietary_last_30 = recent_days.map { |d| (d.value_proprietary_buy.to_f - d.value_proprietary_sell.to_f) }
+      trading_day.ticker.define_singleton_method(:recent_proprietary_net_values) { proprietary_last_30 }
+      # Attach last 30 proprietary net days for Proprietary Last 30 column (date + value)
+      proprietary_last_30_days = recent_days.map { |d| { date: d.trading_date, value: (d.value_proprietary_buy.to_f - d.value_proprietary_sell.to_f) } }
+      trading_day.ticker.define_singleton_method(:recent_proprietary_net_days) { proprietary_last_30_days }
       {
         ticker: trading_day.ticker,
         aggregate: {
@@ -84,9 +90,15 @@ class LatestTradingDaysController < ApplicationController
       days = ticker.stock_trading_days.where(trading_date: last_n_dates)
       next if days.empty?
       last_day = days.order(trading_date: :desc).first
-      # Attach last 30 trading days to ticker for tooltip
+      # Attach last 30 trading days to ticker for tooltip (foreign)
       recent_days = trading_days_by_ticker[ticker.id]&.first(30) || []
       ticker.define_singleton_method(:recent_trading_days) { recent_days }
+      # Attach last 30 proprietary net values for Proprietary Last 30 column
+      proprietary_last_30 = recent_days.map { |d| (d.value_proprietary_net.to_f) }
+      ticker.define_singleton_method(:recent_proprietary_net_values) { proprietary_last_30 }
+      # Attach last 30 proprietary net days for Proprietary Last 30 column (date + value)
+      proprietary_last_30_days = recent_days.map { |d| { date: d.trading_date, value: (d.value_proprietary_net.to_f) } }
+      ticker.define_singleton_method(:recent_proprietary_net_days) { proprietary_last_30_days }
       {
         ticker: ticker,
         aggregate: {

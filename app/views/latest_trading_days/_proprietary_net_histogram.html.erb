@@ -1,11 +1,12 @@
-<%# _proprietary_net_histogram.html.erb - Histogram for last 30 Proprietary Net values for a ticker %>
-<%# Required locals: ticker: Ticker instance %>
+<%# _proprietary_net_histogram.html.erb - Histogram for last N Proprietary Net values for a ticker %>
+<%# Required locals: ticker: Ticker instance, sessions: optional (default: 30) %>
+<% sessions = defined?(sessions) && sessions.to_i > 0 ? sessions.to_i : 30 %>
 <% days = ticker.respond_to?(:recent_proprietary_net_days) ? ticker.recent_proprietary_net_days : [] %>
-<% values = days.present? ? days.last(30).reverse.map { |d| d[:value] } : [] %>
+<% values = days.present? ? days.last(sessions).reverse.map { |d| d[:value] } : [] %>
 <% max_val = values.map(&:abs).max.to_f %>
 <div class="proprietary-net-histogram" style="display:flex; align-items:flex-end; height:80px; gap:2px; width:100%; min-width:120px; max-width:220px;">
   <% if days.present? %>
-    <% days.last(30).reverse.each do |day| %>
+    <% days.last(sessions).reverse.each do |day| %>
       <% val = day[:value].to_f %>
       <% bar_height = max_val > 0 ? (val.abs / max_val * 70).round : 1 %>
       <% bar_color = val > 0 ? '#198754' : (val < 0 ? '#dc3545' : '#bbb') %>

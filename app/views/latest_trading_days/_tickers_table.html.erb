@@ -32,20 +32,20 @@
             <div onclick="sortTable(this, '<%= table_id %>', 5, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
           </th>
           <th style="width: 50px; min-width: 35px; max-width: 65px;">
-            <div onclick="sortTable(this, '<%= table_id %>', 6)">Val Total</div>
-            <div onclick="sortTable(this, '<%= table_id %>', 6, 'value')" style="font-size: 0.95em; color: #6c757d;">Val Negotiated</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 6, 'billion')">Val Total</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 6, 'val_negotiated')" style="font-size: 0.95em; color: #6c757d;">Val Negotiated</div>
           </th>
           <th style="width: 55px; min-width: 35px; max-width: 70px;">
             <div onclick="sortTable(this, '<%= table_id %>', 7, 'billion')">Val Fogn Net</div>
             <div onclick="sortTable(this, '<%= table_id %>', 7, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
           </th>
-          <th style="width: 60px; min-width: 40px; max-width: 80px;"><div onclick="sortTable(this, '<%= table_id %>', 8)">Volume Foreign Net</div></th>
-          <th style="width: 50px; min-width: 35px; max-width: 65px;">
+          <th style="width: 60px; min-width: 40px; max-width: 80px;"><div onclick="sortTable(this, '<%= table_id %>', 8, 'value')">Volume Foreign Net</div></th>
+          <th style="width: 70px; min-width: 70px; max-width: 80px;">
             <div onclick="sortTable(this, '<%= table_id %>', 9, 'billion')">Val Fogn Buy</div>
             <div onclick="sortTable(this, '<%= table_id %>', 9, 'abs_billion')" style="font-size: 0.9em; color: #6c757d;">Val Fogn Sell</div>
           </th>
-          <th style="width: 65px; min-width: 45px; max-width: 85px;">
-            <div onclick="sortTable(this, '<%= table_id %>', 10)">Fogn to Capacity %</div>
+          <th style="width: 75px; min-width: 65px; max-width: 120px;">
+            <div onclick="sortTable(this, '<%= table_id %>', 10)">Fogn to Capa %</div>
             <div onclick="sortTable(this, '<%= table_id %>', 10, 'percent')" style="font-size: 0.9em; color: #6c757d;">Fogn Own %</div>
           </th>
           <th style="width: 65px; min-width: 45px; max-width: 85px;">
@@ -57,10 +57,10 @@
             <div onclick="sortTable(this, '<%= table_id %>', 12, 'percent')" style="font-size: 0.9em; color: #6c757d;">% of Total</div>
           </th>
           <th>
-            <div style="width: 180px; min-width: 140px; max-width: 240px;">Foreign Last 30</div>
+            <div style="width: 140px; min-width: 110px; max-width: 140px;">Foreign Last 30</div>
           </th>
           <th>
-            <div style="width: 180px; min-width: 140px; max-width: 240px;">Proprietary Last 30</div>
+            <div style="width: 140px; min-width: 110px; max-width: 140px;">Proprietary Last 30</div>
           </th>
         </tr>
         </thead>
@@ -149,10 +149,7 @@
                 </div>
               </td>
               <td style="background-color: <%= color %>; position: relative; z-index: 1;">
-                <span class="val-foreign-net-tooltip-trigger" style="cursor: pointer;">
-                  <%= number_with_delimiter(volume_foreign_net) %>
-                </span>
-                <%= render partial: 'latest_trading_days/val_foreign_net_tooltip', locals: { ticker: ticker } %>
+                <%= number_with_delimiter(volume_foreign_net) %>
               </td>
               <td style="background-color: <%= color %>;">
                 <span style="color: #198754; font-weight: bold;"><%= display_billion(value_foreign_buy) %></span>
@@ -181,7 +178,7 @@
               </td>
               <td style="background-color: <%= color %>; min-width: 140px; max-width: 240px;">
                 <div class="foreign-last-30-histogram">
-                  <%= render partial: 'latest_trading_days/val_foreign_net_tooltip', locals: { ticker: ticker, histogram_only: true } %>
+                  <%= render partial: 'latest_trading_days/val_foreign_net_histogram', locals: { ticker: ticker, histogram_only: true } %>
                 </div>
               </td>
               <td style="background-color: <%= color %>; min-width: 140px; max-width: 240px;">
@@ -200,7 +197,6 @@
   </div>
 
   <script>
-    // ...existing code...
     function sortTable(header, tableId, colIndex, sortType = 'value') {
         var table = header.closest('table');
         var tbody = table.tBodies[0];
@@ -210,16 +206,28 @@
         rows.sort(function(a, b) {
             function extractValue(element, type) {
                 var cell = element.cells[colIndex];
-                // Check for data-sort-value on main span (for Val Foreign Net)
-                // var sortSpan = cell.querySelector('[data-sort-value]');
-                // if (sortSpan && !isNaN(parseFloat(sortSpan.dataset.sortValue))) {
-                //     return parseFloat(sortSpan.dataset.sortValue);
-                // }
                 var text = cell.innerText.replace(/,/g, '');
                 if (colIndex === 1) { // Group column: always string sort
                     return text.trim();
                 }
-                if (type === 'percent') {
+                if (colIndex === 8 && type === 'value') {
+                    // Volume Foreign Net: always use the main span (first child node)
+                    var mainSpan = cell.querySelector('span');
+                    var valueText = mainSpan ? mainSpan.innerText : text;
+                    var numberMatch = valueText.match(/-?[\d.]+/);
+                    if (!numberMatch) return 0;
+                    return parseFloat(numberMatch[0]);
+                }
+                if (type === 'val_negotiated') {
+                    // Always use the value in the sub-div (Val Negotiated)
+                    var subDiv = cell.querySelector('div');
+                    var valueText = subDiv ? subDiv.innerText : text;
+                    var hasB = valueText.includes('B');
+                    var numberMatch = valueText.match(/-?[\d.]+/);
+                    if (!numberMatch) return 0;
+                    var value = parseFloat(numberMatch[0]);
+                    return hasB ? value * 1e9 : value;
+                } else if (type === 'percent') {
                     var percentDiv = cell.querySelector('div');
                     if (percentDiv) {
                         var percentMatch = percentDiv.innerText.match(/\(([-\d.]+)/);
