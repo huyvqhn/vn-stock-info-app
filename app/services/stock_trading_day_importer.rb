@@ -98,6 +98,12 @@ class StockTradingDayImporter
         price_change = trade_info["change"].to_f
         price_change_pct = trade_info["changePercent"].to_f
 
+        # Tính volume_change_pct
+        # Lấy ngày trước đó
+        prev_trading_day = StockTradingDay.where(ticker_id: ticker.id).where("trading_date < ?", trade_info["tradingdate"]).order(trading_date: :desc).first
+        prev_volume_total = prev_trading_day&.volume_total.to_f
+        volume_change_pct = prev_volume_total > 0 ? ((volume_total - prev_volume_total) / prev_volume_total * 100.0) : nil
+
         attrs = {
           ticker_id: ticker.id,
           trading_date: trade_info["tradingdate"] ? Date.parse(trade_info["tradingdate"]) : nil, # Use tradingdate from trade_info
@@ -133,6 +139,7 @@ class StockTradingDayImporter
           price_close: price_close,
           price_change: price_change,
           price_change_pct: price_change_pct,
+          volume_change_pct: volume_change_pct,
           created_at: Time.now,
           updated_at: Time.now
         }

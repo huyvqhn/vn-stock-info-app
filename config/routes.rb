@@ -11,7 +11,7 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
-  resources :tickers, only: [ :index ]
+  resources :tickers, only: [ :index, :show ]
 
   get "tickers/api_data", to: "tickers#api_data"
   get "tickers/new_view_name", to: "tickers#api_data"

@@ -105,6 +105,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_29_101000) do
     t.boolean "indicator_pivot_proprietary", default: false
     t.boolean "indicator_volume_spike", default: false
     t.boolean "indicator_candle_reversal", default: false
+    t.float "volume_change_pct"
     t.index ["ticker_id", "price_close"], name: "index_stock_trading_days_on_ticker_id_and_price_close"
     t.index ["ticker_id", "trading_date"], name: "idx_trading_days_ticker_date", unique: true
     t.index ["ticker_id", "volume_total"], name: "index_stock_trading_days_on_ticker_id_and_volume_total"

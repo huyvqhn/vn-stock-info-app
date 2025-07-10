@@ -32,3 +32,4 @@ test:
 production:
   <<: *default
   database: vnstocks_production
+  url: <%= ENV['DATABASE_URL'] %>
