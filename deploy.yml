@@ -1,0 +1,35 @@
+# Deployment configuration for vn-stock-info-app
+
+server:
+  host: 38.54.30.6
+  user: deploy
+
+container_registry:
+  name: ghcr.io
+  username: huyvqhn
+  access_token: Huy-github-access-token
+
+domain:
+  name: null   # No domain yet
+  ssl: true
+
+database:
+  type: postgresql
+  deploy: container
+
+redis:
+  enabled: true
+
+env:
+  # Database configuration
+  DATABASE_URL: postgresql://trader:trader@localhost:5432/vnstocks_production
+  
+  # Redis configuration  
+  REDIS_URL: redis://localhost:6379/0
+  
+  # Application settings
+  RAILS_SERVE_STATIC_FILES: true
+
+volumes:
+  enabled: false  # No file storage mount required
+
