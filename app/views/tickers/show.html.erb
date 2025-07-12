@@ -1,0 +1,14 @@
+<%# Show info for a specific ticker %>
+<%# Expects @ticker to be set in the controller %>
+<h2>Ticker: <%= @ticker.symbol %></h2>
+
+<div style="display: flex; gap: 40px;">
+  <div>
+    <h4>Val Foreign Net Histogram (90 sessions)</h4>
+    <%= render partial: 'latest_trading_days/val_foreign_net_histogram', locals: { ticker: @ticker, sessions: 90, histogram_only: true } %>
+  </div>
+  <div>
+    <h4>Proprietary Net Histogram (90 sessions)</h4>
+    <%= render partial: 'latest_trading_days/proprietary_net_histogram', locals: { ticker: @ticker, sessions: 90 } %>
+  </div>
+</div>

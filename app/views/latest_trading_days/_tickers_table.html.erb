@@ -34,8 +34,8 @@
             <div onclick="sortTable(this, '<%= table_id %>', 5, 'percent')" style="font-size: 0.8em; color: #6c757d;">% of Total</div>
           </th>
           <th style="width: 20px; min-width: 8px; max-width: 25px;">
-            <div onclick="sortTable(this, '<%= table_id %>', 6)">Val Total</div>
-            <div onclick="sortTable(this, '<%= table_id %>', 6, 'value')" style="font-size: 0.8em; color: #6c757d;">Val Negotiated</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 6, 'billion')">Val Total</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 6, 'negotiated')" style="font-size: 0.8em; color: #6c757d;">Val Negotiated</div>
           </th>
           <th style="width: 20px; min-width: 8px; max-width: 25px;">
             <div onclick="sortTable(this, '<%= table_id %>', 7, 'billion')">Val Fogn Net</div>
@@ -278,6 +278,18 @@
                     if (!numberMatch) return 0;
                     var value = parseFloat(numberMatch[0]);
                     return hasB ? value * 1e9 : value;
+                } else if (type === 'negotiated') {
+                    // Sort theo Val Negotiated (giá trị trong div con)
+                    var negotiatedDiv = cell.querySelector('div');
+                    if (negotiatedDiv) {
+                        var negotiatedText = negotiatedDiv.innerText;
+                        var hasB = negotiatedText.includes('B');
+                        var numberMatch = negotiatedText.match(/-?[\d.]+/);
+                        if (!numberMatch) return 0;
+                        var value = parseFloat(numberMatch[0]);
+                        return hasB ? value * 1e9 : value;
+                    }
+                    return 0;
                 } else {
                     var valueText = text.split('(')[0].trim();
                     var hasB = valueText.includes('B');
@@ -304,7 +316,12 @@
             }
         });
         rows.forEach(function(row) { tbody.appendChild(row); });
-        var headerDiv = sortType === 'percent' ? header.querySelector('div:last-child') : header;
+        var headerDiv;
+        if (sortType === 'percent' || sortType === 'negotiated') {
+            headerDiv = header.querySelector('div:last-child');
+        } else {
+            headerDiv = header;
+        }
         if (headerDiv) {
             table.querySelectorAll('th div').forEach(div => {
                 div.classList.remove('sorted', 'asc');
