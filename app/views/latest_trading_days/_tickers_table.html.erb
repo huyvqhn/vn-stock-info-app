@@ -9,7 +9,7 @@
         <thead class="table-dark" style="position: sticky; top: 0; z-index: 2; background: #222;">
         <tr>
           <th style="width: 10px; min-width: 10px; max-width: 15px;"><div onclick="sortTable(this, '<%= table_id %>', 0)">Symbol</div></th>
-          <th style="width: 80px; min-width: 10px; max-width: 80px; font-size: 0.92em;">
+          <th style="width: 50px; min-width: 10px; max-width: 60px; font-size: 0.92em;">
             <div onclick="sortTable(this, '<%= table_id %>', 1)">Group</div>
             <select id="group-filter-<%= table_id %>" class="form-select form-select-sm mt-1" style="width: 80px; font-size: 0.9em;">
               <option value="">All</option>
@@ -42,17 +42,18 @@
             <div onclick="sortTable(this, '<%= table_id %>', 7, 'percent')" style="font-size: 0.8em; color: #6c757d;">% of Total</div>
           </th>
           <th style="width: 25px; min-width: 10px; max-width: 35px;">
-            <div onclick="sortTable(this, '<%= table_id %>', 8)">Volume Foreign Net</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 8)">Vol Fogn Net</div>
+            <div onclick="sortTable(this, '<%= table_id %>', 8, 'market_cap')">MC</div>
           </th>
           <th style="width: 20px; min-width: 8px; max-width: 25px;">
             <div onclick="sortTable(this, '<%= table_id %>', 9, 'billion')">Val Fogn Buy</div>
             <div onclick="sortTable(this, '<%= table_id %>', 9, 'abs_billion')" style="font-size: 0.8em; color: #6c757d;">Val Fogn Sell</div>
           </th>
-          <th style="width: 25px; min-width: 10px; max-width: 35px;">
+          <th style="width: 20px; min-width: 10px; max-width: 30px;">
             <div onclick="sortTable(this, '<%= table_id %>', 10)">Fogn to Capacity %</div>
             <div onclick="sortTable(this, '<%= table_id %>', 10, 'percent')" style="font-size: 0.8em; color: #6c757d;">Fogn Own %</div>
           </th>
-          <th style="width: 25px; min-width: 10px; max-width: 35px;">
+          <th style="width: 20px; min-width: 10px; max-width: 25px;">
             <div onclick="sortTable(this, '<%= table_id %>', 11)">Val Prop Buy</div>
             <div onclick="sortTable(this, '<%= table_id %>', 11)" style="font-size: 0.8em; color: #6c757d;">Val Prop Sell</div>
           </th>
@@ -162,9 +163,15 @@
                 </div>
               </td>
               <td style="background-color: <%= color %>; position: relative; z-index: 1;">
-                <span class="val-foreign-net-tooltip-trigger" style="cursor: pointer;">
+                <span class="val-foreign-net-tooltip-trigger">
                   <%= number_with_delimiter(volume_foreign_net) %>
                 </span>
+                <div style="font-size: 0.95em; color: #6c757d;">
+                  <%# Market Cap: last_price_close * last_share_listed (if present) %>
+                  <% if agg[:last_price_close] && agg[:last_share_listed] %>
+                    <%= number_with_delimiter((agg[:last_price_close].to_f * agg[:last_share_listed].to_f / 1_000_000_000).round(2)) %> B
+                  <% end %>
+                </div>
               </td>
               <td style="background-color: <%= color %>;">
                 <span style="color: #198754; font-weight: bold;"><%= display_billion(value_foreign_buy) %></span>
@@ -270,6 +277,18 @@
                     if (!numberMatch) return 0;
                     var value = parseFloat(numberMatch[0]);
                     return hasB ? value * 1e9 : value;
+                } else if (type === 'market_cap') {
+                    // Sort by Market Cap (MC) value in the sub-div
+                    var mcDiv = cell.querySelector('div');
+                    if (mcDiv) {
+                        var mcText = mcDiv.innerText;
+                        var mcMatch = mcText.match(/([\d,.]+)\s*B/);
+                        if (mcMatch) {
+                            var value = parseFloat(mcMatch[1].replace(/,/g, ''));
+                            return value * 1e9;
+                        }
+                    }
+                    return 0;
                 } else if (type === 'value') {
                     var mainDiv = cell.querySelector('div') ? cell.childNodes[0] : null;
                     var valueText = mainDiv ? mainDiv.textContent : text.split('(')[0].trim();
