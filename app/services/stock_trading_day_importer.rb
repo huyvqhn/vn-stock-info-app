@@ -58,6 +58,9 @@ class StockTradingDayImporter
       begin
         symbol = ticker.symbol
         trade_info = trade_info_by_symbol[symbol] || {}
+        unless trade_info_by_symbol[symbol].present?
+          next
+        end
         trade_proprietary = proprietary_by_symbol.empty? ? {} : proprietary_by_symbol[symbol]
 
         trade_negotiated = all_negotiated_by_symbol[symbol] || {}
